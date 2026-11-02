@@ -59,7 +59,7 @@ $ lothal-ledger-tui
  y copy command  j/k scroll  a agents  r refresh  / search  ? help  q quit
 ```
 
-The doctor and agent boxes report different things. `Every check passes.` means the setup checks passed; the agents box can still count warnings, including agents that are not installed or whose version could not be determined. In v0.4.5 a healthy setup can therefore show 13 agent warnings alongside the doctor's OK status. Press `a` to expand the agent details and read the warnings; the warning count alone does not mean capture is broken.
+The doctor and agent boxes report different things. `Every check passes.` means the setup checks passed; the agents box can still count warnings, including agents that are not installed or whose version could not be determined. In v0.4.6 a healthy setup can therefore show 13 agent warnings alongside the doctor's OK status. Press `a` to expand the agent details and read the warnings; the warning count alone does not mean capture is broken.
 
 Signed out, nothing uploads: what a `sync` repository records meanwhile stays on this machine and never uploads by itself ([Sign in and sync](login-and-sync.md#upload-what-you-recorded-before-signing-in)). What was already waiting to upload when you signed out is counted as `held`, with the line `held (logged_out)` under the queue, until you sign in again as the same account; it is `0 held` when everything had uploaded first. Where a box says what to run (here `lothal-ledger login`), `y` copies the command; the terminal UI never signs in, enables or uploads by itself.
 

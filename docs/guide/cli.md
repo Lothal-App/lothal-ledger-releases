@@ -90,7 +90,7 @@ $ lothal-ledger sessions --limit 2
 More: lothal-ledger sessions --cursor l.…
 ```
 
-The edit count is a count of recorded edit events, not a count of successful file changes. In v0.4.5 a single Codex `apply_patch` or omp `edit` can count as two edits; a refused call can still count even though it changed no file. These Claude Code examples use one `Write` per session.
+The edit count is a count of recorded edit events, not a count of successful file changes. In v0.4.6 a single Codex `apply_patch` or omp `edit` can count as two edits; a refused call can still count even though it changed no file. These Claude Code examples use one `Write` per session.
 
 `search` finds words in the prompts, answers and narration this machine kept (and, signed in, what you may read on the team platform), each hit with its session:
 
