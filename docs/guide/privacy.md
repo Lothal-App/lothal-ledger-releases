@@ -16,9 +16,11 @@ In a repository you enabled ([Enable and modes](enable-and-modes.md)), for every
 
 `content none` keeps only the last two and the shape of the rest: which session and call wrote which lines, with hashes and sizes instead of any text. An item over 8 MiB is not kept, only its size: `Not kept: too large to keep.`
 
+One exception, until the team release: a decision you or the agent recorded explicitly (`record_decision`) keeps its summary and rationale under `content none`. They stay in your local store and upload, when you are signed in to a `sync` repository, as `project` data that every member of your organisation can read. A decision an AI derived is withheld. Before the team release an explicit decision under `content none` becomes attribution and links only.
+
 Nothing is recorded in a repository you did not enable, nor outside a repository. The ledger records no keystrokes and no editor saves, and never says a person wrote a line. On this machine what was recorded is yours: the store under `~/.local/state/lothal-ledger` is readable by your account only, and the CLI, the terminal UI and the editors show you all of it.
 
-A person's save during a long agent shell call (a script or build) can read `ai`, attributed to that agent: this is an accepted attribution limitation ([#371](https://github.com/Lothal-App/lothal-ledger/issues/371)).
+A person's save during a long agent shell call (a script or build) can read `ai`, attributed to that agent. This is an accepted attribution limitation.
 
 ## What leaves this machine
 
@@ -28,7 +30,7 @@ A person's save during a long agent shell call (a script or build) can read `ai`
 | `local` | nothing | nothing |
 | `local, content none` | nothing | nothing |
 | `sync` | nothing: it waits for [`sync --backfill-local`](login-and-sync.md#upload-what-you-recorded-before-signing-in) | what is recorded from then on, redacted first |
-| `sync, content none` | nothing | which session and call wrote which lines, and sizes; no text |
+| `sync, content none` | nothing | which session and call wrote which lines, and sizes; no text, except an explicit decision's summary and rationale (see above) |
 
 **Redacted first.** Before anything uploads, the prompts, answers, thinking, tool inputs and outputs and context go through one redaction on your machine. It replaces recognised secret formats, random-looking values, email addresses and phone numbers, and patterns your own `redaction.custom` rules name, with markers such as `[REDACTED.secret.1f2e3d4c]`. Values in explicit credential positions—authorization and API-key headers, token/API-key flags and query parameters, credential-named assignments and config keys, and URL credentials—are replaced even when they are hex, UUIDs or short passwords. Empty values and placeholders stay unchanged. An item the rules cannot finish is not uploaded at all rather than uploaded half-redacted: it reads `Not uploaded: the redaction rules failed on it.`
 
@@ -39,7 +41,7 @@ Redaction is not a guarantee that arbitrary text contains no secrets: an unrecog
 - the values redaction replaced: the original secret is never sent;
 - the model's opaque thinking (signatures, encrypted or provider-redacted blocks): only its kind and size;
 - anything of a `local` repository, including a question about it: the CLI does not ask the team platform about a `local` repository;
-- any text of a `content none` repository;
+- any text of a `content none` repository, except an explicit decision's summary and rationale (see above);
 - the exact model requests the local proxy keeps (`lothal-ledger enable --proxy`).
 
 ## Who reads what you uploaded

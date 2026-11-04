@@ -8,7 +8,7 @@ The examples ask about one more piece of work, a function this time. Ask your ag
 $ claude
 Lothal Ledger: recording this session in ~/src/your-project (sync, not signed in: kept on this machine)
 $ git add backoff.py
-$ git commit -qm "Add retry delays"
+$ git commit -qm "Add retry delays" -m "Double each wait using the shared retry budget."
 ```
 
 ## Who wrote each line: `blame`
@@ -43,17 +43,24 @@ There is no state for a person. Right after a commit, the ledger may still be wo
 $ lothal-ledger why backoff.py:5
 backoff.py:5  ai  (commit … Add retry delays; local)
         return [base * 2**n for n in range(RETRY_BUDGET)]
+commit body:
+    Double each wait using the shared retry budget.
 model: claude-opus-5-5
 wrote s_…::t_…
   claude-code session … (ended, …)
     call PostToolUse Write … at …
+      thinking (text, 44 bytes): trace block …
     turn 4acc7782-8605-47b2-a674-… (event) started …
+      turn index: 1
+      lothal-ledger trace s_… --turn 1
       prompt: add a function delays(base) in a new file backoff.py: the wait before each retry, doubling from base, RETRY_BUDGET of them
 commit sessions:
   claude-code …
 ```
 
 It also names the write the line replaced, other sessions linked to the commit, and the decisions recorded for the file. When the prompt is not shown, a line in its place says why ([Privacy](privacy.md#what-you-see-instead-of-the-text)). `--context` adds what the model had been given before it wrote the line.
+
+The commit's prose appears under `commit body:` (at most 4,096 UTF-8 bytes). Git trailers such as `Lothal-Session`, `Co-authored-by` and `Signed-off-by` are not prose: a commit with only those after its subject has no body section. For a commit this machine never folded, session trailers appear separately as commit hints, never as proof of which session wrote the line.
 
 ## Why a function exists: `why <file>:<function>` and `dossier`
 
@@ -90,7 +97,9 @@ $ lothal-ledger sessions --limit 2
 More: lothal-ledger sessions --cursor l.…
 ```
 
-The edit count is a count of recorded edit events, not a count of successful file changes. In v0.4.6 a single Codex `apply_patch` or omp `edit` can count as two edits; a refused call can still count even though it changed no file. These Claude Code examples use one `Write` per session.
+The edit count is a count of recorded edit events, not a count of successful file changes. In v0.4.7 a single Codex `apply_patch` or omp `edit` can count as two edits; a refused call can still count even though it changed no file. These Claude Code examples use one `Write` per session.
+
+A shell command that wrote lines (`cat >> file`) counts as an edit once a commit holds those lines. A session an agent started for a subtask (a subagent) is listed under the session that started it, indented, with the name it was given and `(subagent of s_…)`.
 
 `search` finds words in the prompts, answers and narration this machine kept (and, signed in, what you may read on the team platform), each hit with its session:
 
@@ -100,10 +109,10 @@ s_…  …  claude-code  prompt
     add a function «delays»(base) in a new file backoff.py: the wait before each retry, doubling from base, RETRY_BUDGET of them
 ```
 
-This text form is for a terminal. When you pipe or redirect `search`, it automatically prints one JSON document, even without `--json` (unlike `sessions`, `why` and `trace`). For example:
+The text form is the same on a terminal and piped (since 0.4.7; before, a piped `search` printed JSON by itself). `--json` prints one JSON document, for a script. For example:
 
 ```console
-$ lothal-ledger search delays | jq -c '{fields: [.hits[].matched] | unique}'
+$ lothal-ledger search delays --json | jq -c '{fields: [.hits[].matched] | unique}'
 {"fields":["prompt"]}
 ```
 
@@ -163,11 +172,11 @@ $ lothal-ledger sessions --limit 2 --cursor "$(lothal-ledger sessions --limit 2 
 … claude-code  claude-opus-5-5  ~/src/your-project  1 turn, 1 edit  s_…
 ```
 
-`--version --json` names the version and the number of the JSON contract the editors check (`1` since 0.4.5), and `doctor --json` lists what needs you under `attention`, each with its remedy ([Enable and modes](enable-and-modes.md#check-the-setup)):
+`--version --json` names the version and the number of the JSON contract the editors check (`2` since 0.4.7, `1` from 0.4.5 to 0.4.6), and `doctor --json` lists what needs you under `attention`, each with its remedy ([Enable and modes](enable-and-modes.md#check-the-setup)):
 
 ```console
 $ lothal-ledger --version --json | jq -c '{contract}'
-{"contract":1}
+{"contract":2}
 $ lothal-ledger doctor --json | jq -c '{status, attention}'
 {"status":"ok","attention":[]}
 ```

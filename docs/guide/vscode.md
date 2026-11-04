@@ -51,10 +51,24 @@ No record (`unknown`) means this machine has no record of the commit the line ca
 | No prompt was tied to this call. | the agent wrote without a prompt the ledger could tie to it |
 
 A line committed a moment ago can read *Still folding: the ledger is reading this commit. Try again in a moment.* while the ledger works out the commit in the background.
+The extension asks the CLI to wait up to 1.5 seconds for a pending fold. If the
+answer is still pending, the CLI supplies its cache lifetime; the next hover or
+editor refresh after that lifetime asks again. There is no background retry loop.
+
+### Decisions and who delegated the writer
+
+The **Line** and **Dossier** panels list the decisions about the code, as `lothal-ledger why` prints them ([CLI](cli.md)):
+
+- A decision the agent recorded with `record_decision` says where: **recorded in** the agent, the session, the turn and the call (`recorded in claude-code session 7de5…, turn 1, call toolu_01A`). **Open the call in its trace** opens that turn in the Trace panel (`lothal-ledger trace <session> --turn <n>`) with the call marked and scrolled into view; a call the page does not hold says so.
+- A question the agent asked you is a **question** row with its outcome (*answered*, *unanswered*, *cancelled*) and the session it was asked in (`asked in s_…`). Each question reads as the CLI writes it: `Q: Which floor should low_stock default to?  selected: 5  · also offered: 3 | per item`, or `typed answer` when you typed one (your words follow as *typed answer*), or `no answer`. Questions are on this machine only; the team platform's decisions carry none.
+
+When the session that wrote the line was a subagent, its prompt is labelled **prompt (subagent)** (its parent's instruction, not yours), and each session that delegated it follows, nearest first: **delegated by** `s_…` (the agent and its agent type), the call that spawned it, and the prompt of that call's turn; or *no spawning call recorded*. A session forked, handed off or continued from another lists that session as **forked from**, **handed off from** or **continued from** `s_…`, where it branched, and the prompt of the turn it branched from.
 
 ## Trace: the turn that wrote a line
 
 The hover's **Trace** link, **Show Trace of the Writing Turn** in the editor's context menu, or the panel's **Trace** tab opens the **trace** of the turn that wrote the line, as `lothal-ledger why <path>:<line> --trace` prints it ([CLI](cli.md)), in the same order and words: the session (its `s_…`, the agent, its turns and calls, and whether the model's thinking was exposed), then the turn (`Turn 1 · <when> · completed`) with its prompt, the model's thinking, its answers and narration, and each tool call with its input, its output, what it read and the lines it wrote (`wrote: inventory.py 1-3 (ai, …)`). A field this machine did not keep says why, in the words of the table above. A line no session on this machine wrote has no trace; the panel says so, as the CLI does.
+
+**Full / Exchanges** switches the view (`--view exchanges`): Exchanges keeps the prompts, messages, edits, failed calls, questions, decisions and subagents, and folds every other run of calls and thinking into one row, `… 3 calls (Read 2, Grep 1), 1 thinking`. The panel keeps your choice for the next trace. What the agent said just before a call (its narration) reads **narration (Edit call):** when that call follows it on the page.
 
 When the repository syncs and you are signed in, the hover and the panel also offer **Open the session's trace on the web**: the session's trace in the web app, from the link `lothal-ledger status --summary --json` gives as `web.trace`. It opens in your browser; the extension sends nothing there itself.
 

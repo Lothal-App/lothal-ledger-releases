@@ -8,7 +8,7 @@ For readability, captures abbreviate your home directory as `~`. `status`, `doct
 
 ## What the alpha is
 
-- A command-line program, `lothal-ledger`, for Ubuntu 24.04 on x86_64. v0.4.6 ships x86_64 Linux only; there is no macOS or Windows download in this release. It hooks into your coding agents and into git, and keeps what it records on your machine.
+- A command-line program, `lothal-ledger`, for Ubuntu 24.04 on x86_64. v0.4.7 ships x86_64 Linux only; there is no macOS or Windows download in this release. It hooks into your coding agents and into git, and keeps what it records on your machine.
 - Tested every release with **Claude Code**, **Codex** and **omp**. Other agents (Cursor CLI, Copilot CLI, Gemini CLI, OpenCode, pi, Amp, Droid, Windsurf, Antigravity) are supported on a best-effort basis.
 - Opt-in per repository: nothing is recorded until you run `lothal-ledger enable` in a repository.
 - Local first: without signing in nothing leaves your machine. Signed in, a repository you enabled with `--sync` uploads what it records, redacted on your machine first, to the team platform (the dev stage, `api.dev.lothal.app`).
@@ -43,7 +43,7 @@ For readability, captures abbreviate your home directory as `~`. `status`, `doct
 ## Words this guide uses
 
 - **Repository mode**: `local` (recorded on this machine only) or `sync` (recorded, and uploaded while you are signed in). A repository is never "team": the team platform is where `sync` uploads go.
-- **Content**: `full` (prompts, responses, the model's thinking, tool outputs and context are kept) or `none` (attribution only: hashes and sizes, no text).
+- **Content**: `full` (prompts, responses, the model's thinking, tool outputs and context are kept) or `none` (attribution only: hashes and sizes, no text; until the team release an explicit decision keeps its summary and rationale, see [Privacy](privacy.md)).
 - **Session**: one conversation with an agent, named `s_…` in the ledger's output.
 
 ## Reporting

@@ -65,6 +65,8 @@ Lothal Ledger: content withheld (store budget full; run `lothal-ledger doctor`)
 
 and `why` reads `prompt not retained locally` for the lines those sessions wrote. `doctor`'s `Storage:` line counts what was withheld and names the remedy: raise `storage.cap`, shorten local retention, or `disable` repositories you no longer need recorded. Signing in with `sync` repositories also helps: what the team platform holds can then be removed from this machine.
 
+The withheld count is history: it stays on the `Storage:` line until a retention sweep deletes something, and raising `storage.cap` does not reset it. `doctor` warns that the store is full only while the store is under pressure now (past 80 % of its cap, at or past it, below the free-space reserve); once the cap leaves room, the count is printed and the warning is gone.
+
 ## Retention
 
 Content not uploaded is kept 90 days on this machine and the rest of a record 365 days. Once the team platform has acknowledged an upload, its local copy is kept 7 days and its record 30 days.

@@ -15,9 +15,15 @@ The extension finds it on the `PATH` of your project's shell, and the server fin
 
 ## Install the extension
 
+The extension is not part of this release. The public releases repository holds the programs and this guide, not the extension's source, and the extension is published nowhere else this guide can point you to, so you cannot install it from here yet. Until you have it, Zed shows nothing from the ledger except what you add yourself: the [Agent Panel tools](#the-tools-for-zeds-agent-panel) work from your settings alone.
+
+To ask for the extension, open an issue on the releases repository ([Feedback](feedback.md)). With its directory on your machine:
+
 1. Install Rust through rustup: Zed compiles the extension itself.
-2. In Zed (0.205 or later), run **zed: install dev extension** from the command palette and choose the checkout's `extensions/zed` directory. The Extensions page then lists **Lothal Ledger** as a dev extension.
+2. In Zed (0.205 or later), run **zed: install dev extension** from the command palette and choose the extension's `extensions/zed` directory. The Extensions page then lists **Lothal Ledger** as a dev extension.
 3. Open your repository's folder. The server starts for the languages Zed ships.
+
+The rest of this page, up to *The tools for Zed's Agent Panel*, is about the extension once installed. In Neovim, Helix and other editors the server needs no extension ([Other editors](#other-editors)).
 
 Code lenses are off in Zed by default. To see the summary line above each function and class, turn them on in your settings (`"menu"` puts them in the code-action menu instead):
 

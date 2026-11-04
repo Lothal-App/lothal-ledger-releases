@@ -11,7 +11,7 @@ $ lothal-ledger-tui --version
 lothal-ledger-tui …
 ```
 
-It runs the `lothal-ledger` on your `PATH`, which must be 0.4.3 or later (`--cli <path>` names another one).
+It runs the `lothal-ledger` on your `PATH`, which must be 0.4.3 or later (`--cli <path>` names another one). The TUI reads `--version --json`; only CLIs older than 0.4.5 use the legacy text version answer.
 
 ## First run
 
@@ -24,10 +24,10 @@ $ git add retry.py
 $ git commit -qm "Add a retry budget"
 ```
 
-Start the terminal UI inside the repository (or anywhere with `-C <directory>`). It opens on the **Overview**: this repository's mode and content setting, whether you are signed in and what waits to upload, how full the store is, what `doctor` says and the agents it found. `j` and `k` scroll down to the doctor and agent boxes on a small terminal.
+Start the terminal UI inside the repository (or anywhere with `-C <directory>`). It opens on a quick **Overview** from `status --summary --json`: this repository's mode and content setting, whether you are signed in, what waits to upload, and the storage state. Press `d` to load the full repository list, sync and storage details, and doctor checks; `a` loads those details and opens the agents. `j` and `k` scroll down on a small terminal. Older supported CLIs without the summary endpoint use their full overview instead.
 
 ```console
-$ lothal-ledger-tui
+$ lothal-ledger-tui  # then d
  ▄▟▙▄ Lothal │ Ledger                                          ~/src/your-project   ● sync   v…
   1 Overview   2 Blame   3 Why   4 Sessions   5 Search   6 Backfill
  ╭ THIS REPOSITORY ───────────────────────────────────────────────────────────────────────────────╮
@@ -59,7 +59,7 @@ $ lothal-ledger-tui
  y copy command  j/k scroll  a agents  r refresh  / search  ? help  q quit
 ```
 
-The doctor and agent boxes report different things. `Every check passes.` means the setup checks passed; the agents box can still count warnings, including agents that are not installed or whose version could not be determined. In v0.4.6 a healthy setup can therefore show 13 agent warnings alongside the doctor's OK status. Press `a` to expand the agent details and read the warnings; the warning count alone does not mean capture is broken.
+The doctor and agent boxes report different things. `Every check passes.` means the setup checks passed; the agents box can still count warnings, including agents that are not installed or whose version could not be determined. In v0.4.7 a healthy setup can therefore show 13 agent warnings alongside the doctor's OK status. Press `a` to expand the agent details and read the warnings; the warning count alone does not mean capture is broken.
 
 Signed out, nothing uploads: what a `sync` repository records meanwhile stays on this machine and never uploads by itself ([Sign in and sync](login-and-sync.md#upload-what-you-recorded-before-signing-in)). What was already waiting to upload when you signed out is counted as `held`, with the line `held (logged_out)` under the queue, until you sign in again as the same account; it is `0 held` when everything had uploaded first. Where a box says what to run (here `lothal-ledger login`), `y` copies the command; the terminal UI never signs in, enables or uploads by itself.
 
@@ -92,7 +92,7 @@ The states are the same everywhere the ledger shows a line, and there is no stat
 | Unattributed | blank, ○ and a hairline `│` | no agent or tool write was observed for it |
 | No record | `?`, · and a dashed bar `┆` | this machine has no record of the commit the line came from (`unknown`): never read it as unattributed |
 
-The bottom line is the cursor's line: its state, agent, model when known, commit and session. `S` opens that session, `s` the function or class around the line, `t` the trace of the turn that wrote it ([below](#trace-the-turn-that-wrote-a-line)).
+The bottom line is the cursor's line: its state, agent, model when known, commit and session. `S` opens that session, `s` the cached dossier card of the function or class around the line, and `t` the trace of the turn that wrote it ([below](#trace-the-turn-that-wrote-a-line)). The file's cards are read together once with Blame. The card is the compact L0 summary, not a partial full story: in Why, press `o` and enter `path:name` to read the symbol's complete writes, decisions and lineage. Enter on a Blame line still opens its line story, including the CLI's enclosing-symbol card when supplied.
 
 ## Why: the whole story of a line
 
@@ -129,6 +129,14 @@ $ lothal-ledger-tui retry.py:1  # then ⏎
 
 `c` asks for the line's chain across teammates (signed in, the team platform's sessions too); `t` opens the trace of the turn that wrote the line; `o` asks about another line or a symbol (`path:line` or `path:name`).
 
+### Subagents, questions and where a decision was recorded
+
+The Why reads as `lothal-ledger why` prints it ([CLI](cli.md)):
+
+- A session another agent spawned is marked `subagent`, and its own prompt reads `prompt (subagent)`: it is the parent agent's instruction, not a person's. Under the session, each session that delegated it follows, nearest parent first: `delegated by s_… (omp task) call … at …` and, under it, the turn and prompt of the call that spawned it, or `delegated by …: no spawning call recorded`.
+- A question the agent asked (its question tool) reads `question answered: ask` (or `not answered`, `cancelled`) with `asked in s_…`, the session it was asked in. Each of its questions is a `Q:` line: what was picked and what else was offered (`selected: Hi  · also offered: Hello | Hey`), or `typed answer`, whose words are in the details.
+- A decision the agent recorded with `record_decision` has a `recorded in` line: the session (its name when it has one), the turn and the call. `⏎` on it opens that turn's trace with the call at the top.
+
 ### When the prompt is not shown
 
 A turn shows its prompt when this machine kept it. Otherwise the line in its place says why:
@@ -150,11 +158,13 @@ A turn shows its prompt when this machine kept it. Otherwise the line in its pla
 
 `t` on a line in Blame, or in a line's Why, opens the **trace** of the turn that wrote it, as `lothal-ledger why <path>:<line> --trace` prints it ([CLI](cli.md)): the session, then the turn's prompt, the model's thinking, its answers and narration, and each tool call with its input, its output, what it read and the lines it wrote. A field this machine did not keep says why, in the words of the table above. `j` and `k` scroll, `esc` goes back to the why.
 
+`v` switches to the **exchanges** view and back (`--view exchanges`): the prompts, the answers, the edits, the failed calls, the questions, the recorded decisions and the subagents stay, and every other run of calls and thinking folds into one `…` line that counts them by tool and names the command that prints the whole turn. The view stays for the next trace you open.
+
 ```console
 $ lothal-ledger-tui retry.py:1  # then t
  ▄▟▙▄ Lothal │ Ledger                                          ~/src/your-project   ● sync   v…
   1 Overview   2 Blame   3 Why   4 Sessions   5 Search   6 Backfill
- Trace  › retry.py:1  the turn that wrote it
+ Trace  › retry.py:1  the turn that wrote it  view full
 
  Session s_… · claude-code · 1 turn · 1 call · thinking: text
  Models: claude-opus-5-5
@@ -167,7 +177,7 @@ $ lothal-ledger-tui retry.py:1  # then t
 …
      output: File created successfully at: ~/src/your-project/retry.py
 …
- j/k scroll  esc back to why  r refresh  / search  ? help  q quit
+ j/k scroll  v exchanges  esc back to why  r refresh  / search  ? help  q quit
 ```
 
 When the repository syncs and you are signed in, the trace also shows `Session trace on the web:` and the session's trace in the web app (the link `lothal-ledger status --summary --json` gives as `web.trace`); `y` copies it.

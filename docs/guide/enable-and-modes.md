@@ -51,8 +51,10 @@ Each enabled repository has a mode and a content setting:
 |---|---|---|
 | `local` | sessions, prompts, responses, the model's thinking, tool outputs, the context the model was given, which lines each session wrote | nothing, signed in or not |
 | `sync` | the same | while you are signed in: what is recorded from then on, redacted on this machine first (see [Sign in and sync](login-and-sync.md) and [Privacy](privacy.md)) |
-| `local, content none` | attribution only: which session wrote which lines, with hashes and sizes instead of any text | nothing |
-| `sync, content none` | attribution only | while you are signed in: the attribution, hashes and sizes; never a prompt, a response or file content |
+| `local, content none` | attribution only: which session wrote which lines, with hashes and sizes instead of any text; an explicit decision (`record_decision`) keeps its summary and rationale, until the team release | nothing |
+| `sync, content none` | the same | while you are signed in: the attribution, hashes and sizes; never a prompt, a response or file content. An explicit decision's summary and rationale go too, as `project` data every member of your organisation can read; an AI-derived decision does not |
+
+Before the team release, an explicit decision under `content none` becomes attribution and links only.
 
 A repository is never called "team": the team platform is where a `sync` repository's uploads go. Signing in never changes a repository's mode.
 
