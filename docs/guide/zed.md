@@ -11,7 +11,7 @@ $ lothal-ledger-lsp --version
 lothal-ledger-lsp …
 ```
 
-The extension finds it on the `PATH` of your project's shell, and the server finds `lothal-ledger` on that same `PATH`. When neither that `PATH` nor the `binary.path` setting below has the server, the extension downloads the latest release's server into its own directory, and checks for a newer release each time Zed starts it; offline, the last download serves.
+The extension finds it on the `PATH` of your project's shell, but only in the installer's own directory (`~/.lothal-ledger/bin`): a server anywhere else on that `PATH`, a project's own directory included, is not run. The server finds `lothal-ledger` on that same `PATH`. When neither that directory nor the `binary.path` setting below has the server, the extension downloads the latest release's server into its own directory, and installs it only if its SHA-256 is the checksum the release publishes for it; it checks for a newer release each time Zed starts it; offline, the last download serves.
 
 ## Install the extension
 
@@ -96,8 +96,8 @@ The server speaks the Language Server Protocol over standard input and output, s
 
 ## Troubleshooting
 
-- **The extension does not start**: **zed: open log** says why. *lothal-ledger-lsp was not found on this worktree's PATH, and downloading it from the releases failed: …* means Zed's shell `PATH` does not have `~/.lothal-ledger/bin` and the download did not work (offline, or a release before 0.4.5, which has no server): add the directory to that `PATH`, or set `binary.path` as above.
-- **The hover says *Update lothal-ledger***: the `lothal-ledger` the server found is older than 0.4.5, which brings the commands the server reads; update it ([Install](install.md)). There is no fallback to older commands.
+- **The extension does not start**: **zed: open log** says why. *lothal-ledger-lsp was not found on this worktree's PATH (in the installer's directory), and downloading it from the releases failed: …* means Zed's shell `PATH` does not have `~/.lothal-ledger/bin` and the download did not work (offline, a release before 0.4.5, which has no server, or a release whose checksum is missing or does not match its archive): add the directory to that `PATH`, or set `binary.path` as above.
+- **The hover says *Update lothal-ledger***: the `lothal-ledger` the server found does not meet CLI contract 2 (lothal-ledger 0.4.7 or later); update it ([Install](install.md)). There is no fallback to older commands.
 - **The hover says *lothal-ledger is not installed***: the server found no `lothal-ledger`; install it ([Install](install.md)) or set `initialization_options.binary`.
 - **No summary lines**: turn code lenses on (above); a language outside the six has hovers only.
 

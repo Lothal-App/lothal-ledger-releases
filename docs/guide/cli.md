@@ -97,7 +97,7 @@ $ lothal-ledger sessions --limit 2
 More: lothal-ledger sessions --cursor l.…
 ```
 
-The edit count is a count of recorded edit events, not a count of successful file changes. In v0.4.7 a single Codex `apply_patch` or omp `edit` can count as two edits; a refused call can still count even though it changed no file. These Claude Code examples use one `Write` per session.
+The edit count is the number of calls that edited, deleted or moved files, one for each call: one Codex `apply_patch` or omp `edit` is one edit. A call that failed, was denied or was never confirmed (Codex sends no confirmation for an `apply_patch` it refused, so the end of the turn closes it as interrupted) changed no file and is not counted. Sessions recorded by v0.4.7 and earlier counted a Codex `apply_patch` twice (its own call and the `exec` wrapper that ran it) and counted refused calls; `sessions` now counts them as above when it reads those sessions, as it changes no stored record. These Claude Code examples use one `Write` per session.
 
 A shell command that wrote lines (`cat >> file`) counts as an edit once a commit holds those lines. A session an agent started for a subtask (a subagent) is listed under the session that started it, indented, with the name it was given and `(subagent of s_…)`.
 
