@@ -54,11 +54,15 @@ wrote s_…::t_…
       turn index: 1
       lothal-ledger trace s_… --turn 1
       prompt: add a function delays(base) in a new file backoff.py: the wait before each retry, doubling from base, RETRY_BUDGET of them
+steps of session …:
+  writing turn: turn 1, model claude-opus-5-5, completed, commit …
+    prompt: add a function delays(base) in a new file backoff.py: the wait before each retry, doubling from base, RETRY_BUDGET of them
+  1. … Write (edit) succeeded  [wrote this line]
 commit sessions:
   claude-code …
 ```
 
-It also names the write the line replaced, other sessions linked to the commit, and the decisions recorded for the file. When the prompt is not shown, a line in its place says why ([Privacy](privacy.md#what-you-see-instead-of-the-text)). `--context` adds what the model had been given before it wrote the line.
+It also names the write the line replaced, other sessions linked to the commit, and the decisions recorded for the file. Under `steps of session`, it lists the writing session's tool calls in the order they ran, recorded as the session ran, and marks the one that wrote the line. When the prompt is not shown, a line in its place says why ([Privacy](privacy.md#what-you-see-instead-of-the-text)). `--context` adds what the model had been given before it wrote the line.
 
 The commit's prose appears under `commit body:` (at most 4,096 UTF-8 bytes). Git trailers such as `Lothal-Session`, `Co-authored-by` and `Signed-off-by` are not prose: a commit with only those after its subject has no body section. For a commit this machine never folded, session trailers appear separately as commit hints, never as proof of which session wrote the line.
 

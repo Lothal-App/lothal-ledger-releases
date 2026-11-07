@@ -8,7 +8,7 @@ For readability, captures abbreviate your home directory as `~`. `status`, `doct
 
 ## What the alpha is
 
-- A command-line program, `lothal-ledger`, for Ubuntu 24.04 on x86_64. v0.5.0 ships x86_64 Linux only; there is no macOS or Windows download in this release. It hooks into your coding agents and into git, and keeps what it records on your machine.
+- A command-line program, `lothal-ledger`, for Ubuntu 24.04 on x86_64. v0.5.1 ships x86_64 Linux only; there is no macOS or Windows download in this release. It hooks into your coding agents and into git, and keeps what it records on your machine.
 - Tested every release with **Claude Code**, **Codex** and **omp**. Other agents (Cursor CLI, Copilot CLI, Gemini CLI, OpenCode, pi, Amp, Droid, Windsurf, Antigravity) are supported on a best-effort basis.
 - Opt-in per repository: nothing is recorded until you run `lothal-ledger enable` in a repository.
 - Local first: without signing in nothing leaves your machine. Signed in, a repository you enabled with `--sync` uploads what it records, redacted on your machine first, to the team platform (the dev stage, `api.dev.lothal.app`).
