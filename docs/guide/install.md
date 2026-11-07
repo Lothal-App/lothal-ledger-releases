@@ -79,6 +79,8 @@ The updater asks the public repository for the latest release and installs it ov
 
 Codex sessions recorded by v0.4.4 keep their old turn split after the upgrade: a trace can still show an extra, prompt-less turn with calls whose output was not recorded. The upgrade preserves those records; it does not reconstruct their turns or recover content that was not captured. New sessions use the new capture behavior.
 
+Reader upgrades are forward-only: they do not reread transcripts or change facts already recorded. New records appended to an existing session use the new reader from its saved position. An upgrade does not backfill newly supported fields into old records.
+
 ## Where things live
 
 | What | Where |
