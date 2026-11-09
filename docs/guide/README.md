@@ -8,7 +8,7 @@ For readability, captures abbreviate your home directory as `~`. `status`, `doct
 
 ## What the alpha is
 
-- A command-line program, `lothal-ledger`, for Ubuntu 24.04 on x86_64. v0.5.1 ships x86_64 Linux only; there is no macOS or Windows download in this release. It hooks into your coding agents and into git, and keeps what it records on your machine.
+- A command-line program, `lothal-ledger`, for Ubuntu 24.04 on x86_64. v0.5.2 ships x86_64 Linux only; there is no macOS or Windows download in this release. It hooks into your coding agents and into git, and keeps what it records on your machine.
 - Tested every release with **Claude Code**, **Codex** and **omp**. Other agents (Cursor CLI, Copilot CLI, Gemini CLI, OpenCode, pi, Amp, Droid, Windsurf, Antigravity) are supported on a best-effort basis.
 - Opt-in per repository: nothing is recorded until you run `lothal-ledger enable` in a repository.
 - Local first: without signing in nothing leaves your machine. Signed in, a repository you enabled with `--sync` uploads what it records, redacted on your machine first, to the team platform (the dev stage, `api.dev.lothal.app`).
@@ -25,7 +25,7 @@ For readability, captures abbreviate your home directory as `~`. `status`, `doct
 | Page | What you do there |
 |---|---|
 | [Install](install.md) | Install, check, upgrade, and where things live. |
-| [Enable and modes](enable-and-modes.md) | Turn recording on in a repository, choose `local` or `sync` and `content none`, check the setup, turn it off. |
+| [Enable and modes](enable-and-modes.md) | Turn recording on in a repository, choose `local` or `sync`, keep content out, check the setup, turn it off, keep a session out (incognito) or delete one. |
 | [Sign in and sync](login-and-sync.md) | Sign in, see what uploads and when, upload what you recorded before signing in, sign out. |
 | [Privacy](privacy.md) | What is recorded, what leaves your machine, who can read what you uploaded, and what you see instead of text you may not read. |
 | [Storage](storage.md) | How much the ledger keeps on your machine, the cap and the reserve, and what happens when it is full. |

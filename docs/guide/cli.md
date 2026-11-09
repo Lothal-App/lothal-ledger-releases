@@ -64,7 +64,23 @@ commit sessions:
 
 It also names the write the line replaced, other sessions linked to the commit, and the decisions recorded for the file. Under `steps of session`, it lists the writing session's tool calls in the order they ran, recorded as the session ran, and marks the one that wrote the line. When the prompt is not shown, a line in its place says why ([Privacy](privacy.md#what-you-see-instead-of-the-text)). `--context` adds what the model had been given before it wrote the line.
 
+The steps are there before any commit, as soon as the agent has written the line. Ask about a line an agent wrote, tested, rewrote and tested again, and the steps show that story: the first write, marked `[wrote the text this line displaced]`, the test command that failed with its exit code (`failed, exit 101` for a failing `cargo test`), the rewrite, marked `[wrote this line]`, and the test that passed. The writing turn says `not committed` until a commit holds the line, then names the commit; the steps stay the same. `why` lists at most 24 steps; when more follow, it says so and `trace` shows the rest.
+
+`turn index: 1` and `lothal-ledger trace s_… --turn 1` under the writing turn open that turn of the session's trace. A decision made in a turn carries the same route: a question you answered, a plan you reviewed or a permission you decided ends with the two lines of the turn you decided it in, and a decision the agent recorded follows its `recorded in:` line with the `trace` command for its call's turn. A question you answered in turn 2 of a session that wrote the line in turn 5 routes to turn 2:
+
+```text
+decisions:
+  … implicit (human) omp, session … (captured in it): question answered: ask (asked in s_…)
+    Q: Which greeting should I add?  selected: Hi  · also offered: Hello | Hey
+    turn index: 2
+    lothal-ledger trace s_… --turn 2
+```
+
+Besides the decisions that name the file, `why` lists the ones that led to the line: a plan approved, a question answered or a permission refused in the writing session at or before its write, in any of its turns (and, for a subagent's line, in the session that started it, before it did), the permission for the call that wrote the line, and the decisions the agent recorded before the write. A decision made after the write is listed only when it names the file or the function.
+
 The commit's prose appears under `commit body:` (at most 4,096 UTF-8 bytes). Git trailers such as `Lothal-Session`, `Co-authored-by` and `Signed-off-by` are not prose: a commit with only those after its subject has no body section. For a commit this machine never folded, session trailers appear separately as commit hints, never as proof of which session wrote the line.
+
+A line committed before an upgrade from 0.4.8 or earlier is answered from the store that upgrade set aside: `why` says `legacy store: the store set aside at the upgrade`, `blame` adds `(legacy store)`, `trace` says `From the legacy store`, and `--json` carries `"source": "legacy"` ([Install](install.md#upgrade)).
 
 ## Why a function exists: `why <file>:<function>` and `dossier`
 

@@ -9,10 +9,23 @@ lothal-ledger doctor
 `doctor` checks this machine and the repository you run it in, and changes nothing. Its first line is the overall state:
 
 - `Doctor: ok`: nothing needs you.
-- `Doctor: warning`: something records less than it could (an agent's version unverified, a git hook slot held by another hook, the store nearly full); each such check is listed under the first line. The ledger keeps working.
+- `Doctor: warning`: something records less than it could (an agent's version unverified, a git hook slot held by another hook, the store nearly full or recording stopped at its cap); each such check is listed under the first line. The ledger keeps working.
 - `Doctor: error`: something is broken, for example the local store cannot be opened. Fix it before relying on what is recorded.
 
 `lothal-ledger doctor --json` gives each check with its `status` and details, for a bug report or a script.
+
+## The round trip
+
+`doctor` also reads back the agents' own records the ledger keeps and compares each with the agent's file or database, at the place it came from. It checks the most recent 256 records (at most 16 MiB); `lothal-ledger doctor --all` checks every one, and `lothal-ledger doctor --session <session>` lists each record of one session. Its `Round trip:` line is followed by one line per agent file, counting its records:
+
+- `identical`: the record is the agent's, byte for byte.
+- `identical apart from declared omissions`: the same, except where the ledger declared it left something out (opaque thinking, content an ignore rule excluded, an item over the item cap). With `--session`, each omission is listed with its place and, for an excluded one, its rule. Nothing to do.
+- `source changed` or `missing`: the agent rewrote or deleted its own file after the ledger read it. The ledger keeps what it read, and the check stays `ok`. Nothing to do.
+
+Two things are not right and worth a report ([Feedback](feedback.md)), with `doctor`'s output:
+
+- `a new high-entropy field` in a round trip warning: an agent's update added a field no reader of the ledger classifies yet. The ledger keeps only its presence and size.
+- `transcript records neither stored nor skipped with a reason` under `transcripts`: the ledger read records it neither kept nor left out for a named reason, a gap it should not have.
 
 ## Common problems
 
@@ -22,9 +35,15 @@ lothal-ledger doctor
 
 **Nothing is recorded from Codex.** Trust the hooks in Codex (see [Enable and modes](enable-and-modes.md#enable)); `doctor`'s `Codex` line names what is missing.
 
-**An agent shows `not_found` or is not listed by `enable`.** Its program was not on your `PATH` when you ran `enable`. Install it, then run `lothal-ledger enable --agent <slug>` again (`claude-code`, `codex`, `omp`). The repository keeps its mode and content setting.
+**An agent shows `not_found` or is not listed by `enable`.** Its program was not on your `PATH` when you ran `enable`. Install it, then run `lothal-ledger enable --agent <slug>` again (`claude-code`, `codex`, `omp`). The repository keeps its mode and its ignore rules.
 
-**The agent cannot use the ledger's tools.** `doctor`'s `MCP` rows show `absent` or `outdated` for it: run `lothal-ledger enable` in the repository, then start a new agent session. This repairs the integrations without changing the repository's mode or content setting.
+**The agent cannot use the ledger's tools.** `doctor`'s `MCP` rows show `absent` or `outdated` for it: run `lothal-ledger enable` in the repository, then start a new agent session. This repairs the integrations without changing the repository's mode or its ignore rules.
+
+**After an upgrade, a ledger tool answers `MCP server retired after an upgrade`.** The agent session still runs the tool server of the release before. Reconnect the server (in omp, `/mcp reload`) or restart the session ([Install](install.md#upgrade)).
+
+**After upgrading from 0.4.8 or earlier, answers say `legacy store`.** The old store was set aside unchanged and a new one started ([Install](install.md#upgrade)); a line or session only the old store holds is answered from it and says so. Nothing to do: it is read-only and does not count toward the storage cap ([Storage](storage.md#the-store-set-aside-at-an-upgrade)). Until the background flusher has set it aside, `doctor` says `migration pending` and what the hooks capture waits for it.
+
+**`status` says `content none`, or content reads `Not recorded: an ignore rule excludes it.`** An ignore rule excludes it ([Keep content out](enable-and-modes.md#keep-content-out)): `status` lists the ignore files in force and how many rules each holds. A repository excluded whole has a `**` line in `.lothal-ledger/ignore`, in `.git/lothal/ignore` (where the ledger moved a repository's old `--content none` setting) or in `~/.config/lothal-ledger/ignore`. Delete that line to record content from then on; what was recorded while it was there keeps no content.
 
 **A git hook is `skipped`.** Another hook or a hook manager (husky, lefthook, pre-commit, `core.hooksPath`) holds that slot. Nothing of yours is changed. Commits are still linked, when the next agent hook or `lothal-ledger` command runs, as long as git's own records prove which commit each was made on.
 
@@ -43,11 +62,11 @@ $ lothal-ledger sync --backfill-local
 lothal-ledger: sign in first (`lothal-ledger login`): the backfill queues captures under the current login
 ```
 
-**The store is full.** `doctor`'s `Storage:` line says how full and what to do; see [Storage](storage.md).
+**The store is full: `not recording: budget`.** The store reached its capture allowance (the cap less its maintenance reserve), so recording stopped whole: nothing new is recorded or attributed until there is room. Raise `storage.cap`, delete sessions you do not need with `lothal-ledger delete-session`, shorten retention, or free disk space when the disk is short; recording resumes on its own once 1 % of the cap is free. See [Storage](storage.md#when-the-store-is-full).
 
 **Anything else.** Run `lothal-ledger doctor` and report what it says ([Feedback](feedback.md)). The hooks' own diagnostics are in `~/.local/state/lothal-ledger/logs/hook.log`; they never contain prompt or response text.
 
-To pause recording everywhere without changing anything, set `LOTHAL_LEDGER_DISABLE=1` in the environment your agents run in.
+`LOTHAL_LEDGER_DISABLE=1` in an agent's environment does not pause recording: it makes each session it reaches incognito for good ([Keep a session out: incognito](enable-and-modes.md#keep-a-session-out-incognito)). To stop recording a repository, run `lothal-ledger disable` in it.
 
 ## Remove everything
 
@@ -60,14 +79,16 @@ cd ~
 lothal-ledger disable
 ```
 
-What was recorded stays until you delete it:
+What was recorded stays until you delete it. The first line also removes the store an upgrade set aside (`legacy/`); the second, the repository's shared `.git/lothal/ignore`:
 
 ```bash
 rm -rf ~/.local/state/lothal-ledger
 rm -rf ~/src/your-project/.git/lothal
 ```
 
-Then the programs and the installer's files (keep `~/.config/lothal-ledger/settings.json` if you want your settings back on a later install):
+A repository's `.lothal-ledger/` directory (its settings and ignore rules) is part of the repository; remove it there if nobody needs it.
+
+Then the programs and the installer's files (keep `~/.config/lothal-ledger/settings.json` and `~/.config/lothal-ledger/ignore` if you want your settings and ignore rules back on a later install):
 
 ```bash
 rm -rf ~/.lothal-ledger

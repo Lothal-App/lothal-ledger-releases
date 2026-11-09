@@ -26,7 +26,7 @@ Add which? Numbers or names, separated by spaces or commas; `all` for every one 
 
 It does four things:
 
-1. **Records this repository**, in `local` mode on its first enable (below); a re-run keeps its recorded mode and content setting unless you explicitly change them. The choice is kept in `.git/lothal/settings.json`, which your worktrees of the repository share and which is never committed.
+1. **Records this repository**, in `local` mode on its first enable (below); a re-run keeps its recorded mode unless you name another. The choice is kept in `.git/lothal/settings.json`, which your worktrees of the repository share and which is never committed.
 2. **Adds the agents you picked**: their hooks, in each agent's own configuration in your home directory. Only its own entries are added; yours are never replaced or reordered.
 3. **Registers the `lothal-ledger` tool server** with those agents, so they can ask the ledger `why`, `dossier` and `search`, and record decisions.
 4. **Installs six git hooks** in this repository, only into free slots. A hook that is already there (yours, or a hook manager's such as husky or lefthook) is left alone and reported as `skipped`; commits are still linked later.
@@ -43,7 +43,7 @@ The agent hooks are installed once for your user. In every further repository yo
 
 **Claude Code and omp** start using the hooks with their next session; a session already running keeps the hooks it started with. In a folder Claude Code has not trusted yet, accept its trust dialog.
 
-**A session already running when you enable.** Its recording starts where its next step finds it; what it wrote before is not recorded. Run `lothal-ledger enable` inside that session (from its shell) and it asks once: `Start here or backfill? [S/b]`. Answer `b` to keep the earlier part too, then record it yourself with `lothal-ledger backfill --session <session>` (the `s_…` reference `enable` printed). It shows what it would record first (nothing leaves your machine for the preview) and records only once you confirm (`--yes` in a script). It records each part once: what was recorded already is left as it is. It follows the same rules as recording itself: your ignore rules, a deleted session stays deleted, an incognito session is never recorded, a `local` repository sends nothing, and a `sync` repository uploads under your current sign-in only. An agent's JSONL transcript can be recorded the same way by its path: `lothal-ledger backfill <transcript> --agent claude-code`. Nothing ever runs it for you.
+**A session already running when you enable.** Its recording starts where its next step finds it; what it wrote before is not recorded. Run `lothal-ledger enable` inside that session (from its shell) and it asks once: `Start here or backfill? [S/b]`. Enter or `s` starts here; without a terminal it starts here without asking. A later `enable` does not ask that session again and never widens what the first answer left out. Answer `b` to keep the earlier part too, then record it yourself with `lothal-ledger backfill --session <session>` (the `s_…` reference `enable` printed). It shows what it would record first (nothing leaves your machine for the preview) and records only once you confirm (`--yes` in a script). It records each part once: what was recorded already is left as it is. It follows the same rules as recording itself: your ignore rules, a deleted session stays deleted, an incognito session is never recorded, a `local` repository sends nothing, and a `sync` repository uploads under your current sign-in only. An agent's JSONL transcript can be recorded the same way by its path: `lothal-ledger backfill <transcript> --agent claude-code`. Nothing ever runs it for you.
 
 ## The modes
 
@@ -91,11 +91,11 @@ The user file is read first, then `.lothal-ledger/ignore`, then `.git/lothal/ign
 $ mkdir -p .lothal-ledger && echo '**' >> .lothal-ledger/ignore
 $ lothal-ledger status
 …
-This repository (~/src/your-project): local, content none
+This repository (~/src/your-project): local, content none; content kept out by ignore rules: 1 rule in ~/src/your-project/.lothal-ledger/ignore
 …
 ```
 
-Remove the rule to record content again:
+`status` still names a repository excluded whole `content none`; it is a rule, not a mode, and `status` names each ignore file in force and how many rules it holds. Remove the rule to record content again:
 
 ```bash
 rm .lothal-ledger/ignore
@@ -151,7 +151,7 @@ omp: ok (version …, minimum none); user=true repo=false
 
 - `Hook binary: "ok"`: the hooks run `~/.lothal-ledger/bin/lothal-ledger`.
 - `Git hooks: current` for this repository, or each `skipped` slot with its reason.
-- `MCP`: the row of each agent you use reads `current`. `absent` means the agent cannot call the ledger's tools: run `lothal-ledger enable` in the repository; its mode and content setting stay as they were.
+- `MCP`: the row of each agent you use reads `current`. `absent` means the agent cannot call the ledger's tools: run `lothal-ledger enable` in the repository; its mode stays as it was.
 - `Codex`: no missing trust. Until you trust the hooks in Codex, `doctor` warns `codex: untrusted` and repeats the step above.
 - One line per agent with its version. `version_unverified` means the agent's version could not be read, so its support is not confirmed; it still records.
 
@@ -191,6 +191,19 @@ $ lothal-ledger disable
 
 `disable` removes exactly what `enable` wrote; entries it did not write are left in place. `--agent <slug>` removes one agent only, wherever you run it.
 
-To pause recording without changing anything, set `LOTHAL_LEDGER_DISABLE=1` in the environment of your agent.
+## Keep a session out: incognito
+
+An incognito session records nothing from the moment you choose it, and stays incognito for good: resuming it, a fork of it and the subagents it starts are not recorded either, even once the variable below is gone. Start a new session to record again.
+
+- **From its start.** Start the agent with `LOTHAL_LEDGER_DISABLE=1` in its environment (for example `LOTHAL_LEDGER_DISABLE=1 claude`), or in omp type `/ledger-incognito` before your first prompt. The session leaves nothing in the ledger: no session, no upload, and its edits read `unattributed`. A commit made from its shell gets no `Lothal-Session` trailer naming it, and the agent cannot record a decision.
+- **During a session.** In omp, type `/ledger-incognito`: recording stops at once. When the session recorded something already, omp asks whether to keep it (`Keep what it recorded`) or delete it (`Delete this session from the ledger`, which runs `delete-session` below and shows what it reports: a team copy whose delete is pending, events of the set-aside store that are hidden, not erased; [What the agent tells you](in-agent.md#what-the-agent-tells-you)); unanswered after 60 seconds, it is kept. Until you answer, nothing of the session uploads. Neither answer starts recording again. Resuming a recorded session of another agent with `LOTHAL_LEDGER_DISABLE=1` makes it incognito from then on; nothing asks, and what it recorded before is kept.
+
+## Delete a session
+
+`lothal-ledger delete-session <session>` removes one session from this machine entirely, with its subagent sessions: what they recorded, their links to the lines they wrote, their decisions, their queued uploads and their search entries. `<session>` is the `s_…` reference `sessions` and `why` print. What the agent recorded before the delete is never read in again; a resumed session starts afresh. The command ends with `complete: secure delete and truncating checkpoint done`; if another program kept the store busy it says so, and running it again finishes the delete.
+
+A session recorded before an upgrade from 0.4.8 or earlier is also in the store that upgrade set aside ([Install](install.md#upgrade)), and that store is read only: there the session is hidden from every answer, not removed, and its records stay in `~/.local/state/lothal-ledger/legacy/` on disk. The command then also says `legacy store: … events hidden (read only, not rewritten)`. To remove those records from the disk too, delete the `legacy/` directory, which removes every session recorded before the upgrade.
+
+It deletes on this machine only. When a `sync` repository already uploaded part of the session, the team platform keeps that copy for now: `status` lists the session as `Deleted session <hash>: team delete: pending (Phase 7)`, and a later release deletes it there.
 
 Next: [Sign in and sync](login-and-sync.md).

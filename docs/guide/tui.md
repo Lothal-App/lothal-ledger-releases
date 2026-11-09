@@ -15,7 +15,7 @@ It runs the `lothal-ledger` on your `PATH`, which must be 0.4.3 or later (`--cli
 
 ## First run
 
-The screens below are of the repository the earlier pages set up, after one more session whose work is committed (a line needs a commit to have a story). Start your agent in the repository and ask it `add a retry budget constant, RETRY_BUDGET = 3, in a new file retry.py`; when it has written the file, end the session and commit the file:
+The screens below are of the repository the earlier pages set up, after one more session whose work is committed (before the commit, Why reads a line from the working log, `Uncommitted: read from the working log`, and has no commit to show). Start your agent in the repository and ask it `add a retry budget constant, RETRY_BUDGET = 3, in a new file retry.py`; when it has written the file, end the session and commit the file:
 
 ```console
 $ claude
@@ -34,7 +34,8 @@ $ lothal-ledger-tui  # then d
  │ path         ~/src/your-project…│
  │ recording    ● yes                                                                             │
  │ mode         sync  uploads while signed in                                                     │
- │ content      full  prompts and context are kept                                                │
+ │ content      full                                                                              │
+ │              recorded except what ignore rules exclude                                         │
  ╰────────────────────────────────────────────────────────────────────────────────────────────────╯
  ╭ REPOSITORIES · 1 ENABLED ──────────────────────────────────────────────────────────────────────╮
  │ ● ~/src/your-project         sync…│
@@ -59,7 +60,13 @@ $ lothal-ledger-tui  # then d
  y copy command  j/k scroll  a agents  r refresh  / search  ? help  q quit
 ```
 
-The doctor and agent boxes report different things. `Every check passes.` means the setup checks passed; the agents box can still count warnings, for example for an installed agent whose version could not be determined. Releases up to v0.4.7 also warned `Agent version could not be determined` for every supported agent that is not installed, so a healthy setup could show 13 agent warnings alongside the doctor's OK status; an agent that is not installed now carries none. Press `a` to expand the agent details and read the warnings; the warning count alone does not mean capture is broken.
+`content` says what the ignore rules keep out ([Privacy](privacy.md)): `full`, `recorded except what ignore rules exclude`, with how many rules in how many ignore files are in force, or, when a `**` rule excludes the whole repository, `none`, `an ignore rule (**) excludes the whole repository: hashes and sizes only`. To keep content out, add rules to `.lothal-ledger/ignore`; there is no content mode to turn off.
+
+STORAGE measures everything the ledger keeps on this machine, each repository's `.git/lothal` included, against the cap ([Storage](storage.md)). When the store reaches its capture allowance, 95 % of the cap, recording stops: the header says `○ not recording: budget`, the `recording` row turns to `○ no`, and STORAGE says, in the words `lothal-ledger status` uses, that nothing new is recorded or attributed until there is room, since when, and what frees room. Recording resumes by itself once there is room again. A line committed while recording is stopped is not folded: Why says `Not recorded: recording was stopped (not recording: budget); this commit was not folded.`, and Blame does not promise a fold that will not come.
+
+The doctor and agent boxes report different things. `Every check passes.` means the setup checks passed; the agents box can still count warnings, for example for an installed agent whose version could not be determined. Releases up to v0.4.7 also warned `Agent version could not be determined` for every supported agent that is not installed, so a healthy setup could show 13 agent warnings alongside the doctor's OK status; an agent that is not installed now carries none. Press `a` to expand the agent details and read the warnings; the warning count alone does not mean capture is broken. The doctor box also shows the round trip, as `lothal-ledger doctor` prints it (`Round trip: ok; … records (… bytes) checked in … streams`), with each record whose source changed or went missing; then it does not say `Every check passes.`
+
+After `lothal-ledger delete-session` of a session the team store holds, the SYNC box lists it, on the first screen and after `d` alike, as `deleted … · team delete: pending (Phase 7)`: the team copy stays until Phase 7.
 
 Signed out, nothing uploads: what a `sync` repository records meanwhile stays on this machine and never uploads by itself ([Sign in and sync](login-and-sync.md#upload-what-you-recorded-before-signing-in)). What was already waiting to upload when you signed out is counted as `held`, with the line `held (logged_out)` under the queue, until you sign in again as the same account; it is `0 held` when everything had uploaded first. Where a box says what to run (here `lothal-ledger login`), `y` copies the command; the terminal UI never signs in, enables or uploads by itself.
 
@@ -96,7 +103,7 @@ The bottom line is the cursor's line: its state, agent, model when known, commit
 
 ## Why: the whole story of a line
 
-`⏎` on a line opens **Why**: the commit, the session and the call that wrote the line, the turn and its prompt, what the model saw, the decisions recorded about it, and every session behind the commit. `h` and `l` fold and unfold, `⏎` on a session opens it.
+`⏎` on a line opens **Why**: the commit, the session and the call that wrote the line, the turn and its prompt, the steps of the writing session, what the model saw, the decisions recorded about it, and every session behind the commit. `h` and `l` fold and unfold, `⏎` on a session opens it, and `⏎` on a turn opens that turn's trace at the call.
 
 ```console
 $ lothal-ledger-tui retry.py:1  # then ⏎
@@ -110,8 +117,9 @@ $ lothal-ledger-tui retry.py:1  # then ⏎
    ▾ wrote s_…::t_…
      ▾ claude-code session …  ended
        ▾ call PostToolUse Write  claude-opus-5-5
-         ▾ turn 4acc7782-8605-47b2-a674-…  completed
+         ▾ turn 1  completed
              prompt add a retry budget constant, RETRY_BUDGET = 3, in a new file retry.py
+   ▸ Steps of session s_…  1 step
    ▸ What the model saw  What the model saw was not captured for this agent.
      Decisions  none recorded
    ▸ Commit sessions (1)
@@ -136,6 +144,14 @@ The Why reads as `lothal-ledger why` prints it ([CLI](cli.md)):
 - A session another agent spawned is marked `subagent`, and its own prompt reads `prompt (subagent)`: it is the parent agent's instruction, not a person's. Under the session, each session that delegated it follows, nearest parent first: `delegated by s_… (omp task) call … at …` and, under it, the turn and prompt of the call that spawned it, or `delegated by …: no spawning call recorded`.
 - A question the agent asked (its question tool) reads `question answered: ask` (or `not answered`, `cancelled`) with `asked in s_…`, the session it was asked in. Each of its questions is a `Q:` line: what was picked and what else was offered (`selected: Hi  · also offered: Hello | Hey`), or `typed answer`, whose words are in the details.
 - A decision the agent recorded with `record_decision` has a `recorded in` line: the session (its name when it has one), the turn and the call. `⏎` on it opens that turn's trace with the call at the top.
+- A decision linked to the one session active when it was recorded reads `linked by time window to s_…`, and its details name that session, in the words `lothal-ledger why` uses for it.
+- A decision whose text an ignore rule excluded reads `Not recorded: an ignore rule excludes it.` in place of its summary, never a blank row.
+
+A turn is named by its number in the session's trace, `turn 1`, the number `lothal-ledger trace s_… --turn 1` takes; the details show that command as `route`, and the turn's own id as `turn id`. A question, plan or permission row made in a known turn has a `turn N  lothal-ledger trace s_… --turn N` line under it; `⏎` on it opens that turn's trace.
+
+### The steps of the writing session
+
+`Steps of session s_…` lists the writing session's tool calls in the order they ran, from the write on, as `lothal-ledger why` prints its `steps of session` list: first `writing turn:` with the turn's number, model, status and commit (`not committed` before one), then each call, `1. Write (edit) succeeded  [wrote this line]`, with its exit code, `test` for a test run, and the first line of its error. The call whose text the line displaced reads `[wrote the text this line displaced]`. The outcome is a word (`succeeded`, `failed`, `interrupted`, `denied`, `unknown`), so it reads the same without colour. `⏎` on a step opens its turn's trace at that call.
 
 ### When the prompt is not shown
 
@@ -143,20 +159,25 @@ A turn shows its prompt when this machine kept it. Otherwise the line in its pla
 
 | What it says | Why |
 |---|---|
-| Not recorded: this repository records attribution only. | the repository is `content none` |
-| Not kept: a capture budget ran out (the store was full, or redaction ran out of time). | the store was full ([Storage](storage.md)), or redaction ran out of time |
+| Not recorded: an ignore rule excludes it. | an ignore rule excludes the whole repository (`**`), or the repository was `content none` when the turn was recorded; in a trace, also a call that names a path an ignore rule excludes |
+| Not kept: a capture budget ran out (the store was full, or redaction ran out of time). | redaction ran out of time when it was uploaded (read from the team platform), or a release before v0.5.0 found the store full; since v0.5.0 a full store stops recording instead ([Storage](storage.md)) |
+| Not kept: too large to keep. | an item over `storage.item_cap` (8 MiB by default), such as a long tool output |
 | Kept on the team store; removed from this machine. | uploaded, then removed here to make room; signed in, it is read from the team platform |
-| In the agent's transcript, not stored yet. | the store had no room; it is stored once there is |
-| Lost: the agent's transcript changed. | it was waiting in the agent's transcript, which changed before it was stored |
-| Lost: the agent's transcript is gone. | the same, and the transcript was deleted |
+| Removed: past its retention, or deleted. | its retention period ended ([Storage](storage.md)), or it was deleted from the team store |
 | No prompt was tied to this call. | the agent wrote without a prompt the ledger could tie to it |
 | No prompt is retained for this turn on this machine. | any other reason this machine holds no text for the turn |
 
+A trace the legacy store answers ([below](#lines-recorded-before-v050)) can also say `In the agent's transcript, not stored yet.`, `Lost: the agent's transcript changed.` or `Lost: the agent's transcript is gone.`: when the store was full, a release before v0.5.0 left that text in the agent's transcript to store later, and it was never stored.
+
 `What the model saw` is the context the model was given for the call; for agents whose requests are not captured it says `What the model saw was not captured for this agent.`
+
+### Lines recorded before v0.5.0
+
+Upgrading from v0.4.8 or earlier sets the old store aside, unchanged and read only, in `legacy/` beside the new one, and a line committed before the upgrade is answered from it. Why then says `legacy store: the store set aside at the upgrade (read only, migrated in a later release, in Phase 8) answers this line`, its DETAILS show `legacy` as the `source`, and a session it names is marked `legacy store`; Blame's bottom line marks the line `legacy store`, and its trace opens with `From the legacy store: the store set aside at the upgrade (read only, migrated in a later release, in Phase 8)`. A trace read from the team platform opens with `From the team platform: this machine's store has no record of this session.` Sessions and Search list only what the new store recorded, so the sessions from before the upgrade are not in them. After `d`, the Overview's STORAGE box ends with a LEGACY STORE part: its path, size and unsent rows, and that it is migrated in a later release, in Phase 8, as `lothal-ledger status` prints its `Legacy store:` line.
 
 ## Trace: the turn that wrote a line
 
-`t` on a line in Blame, or in a line's Why, opens the **trace** of the turn that wrote it, as `lothal-ledger why <path>:<line> --trace` prints it ([CLI](cli.md)): the session, then the turn's prompt, the model's thinking, its answers and narration, and each tool call with its input, its output, what it read and the lines it wrote. A field this machine did not keep says why, in the words of the table above. `j` and `k` scroll, `esc` goes back to the why.
+`t` on a line in Blame, or in a line's Why, opens the **trace** of the turn that wrote it, as `lothal-ledger why <path>:<line> --trace` prints it ([CLI](cli.md)): the session, then the turn's prompt, the model's thinking, its answers and narration, and each tool call with its input, its output, what it read and the lines it wrote. A field this machine did not keep says why, in the words of the table above; a field read from the team platform can also say the lines [Privacy](privacy.md#what-you-see-instead-of-the-text) lists. `j` and `k` scroll, `esc` goes back to the why.
 
 `v` switches to the **exchanges** view and back (`--view exchanges`): the prompts, the answers, the edits, the failed calls, the questions, the recorded decisions and the subagents stay, and every other run of calls and thinking folds into one `…` line that counts them by tool and names the command that prints the whole turn. The view stays for the next trace you open.
 
@@ -184,7 +205,7 @@ When the repository syncs and you are signed in, the trace also shows `Session t
 
 ## Sessions, search and backfill
 
-**Sessions** (`4`) lists the sessions recorded on this machine, newest first; `a` and `s` filter by agent and state, `⏎` opens a session's card (its reference, agent, turns and events):
+**Sessions** (`4`) lists the sessions recorded on this machine, newest first, with the model each ran on where the terminal is wide enough; `a` and `s` filter by agent and state, `⏎` opens a session's card (its reference, agent, model, repository, turns, edits and events, and its title when it has one):
 
 ```console
 $ lothal-ledger-tui --tab sessions
@@ -192,10 +213,10 @@ $ lothal-ledger-tui --tab sessions
   1 Overview   2 Blame   3 Why   4 Sessions   5 Search   6 Backfill
  Filter › f   agent all a   state all s…sessions
 
-   LAST SEEN        AGENT         STATE   TURNS EVENTS SESSION
- › … claude-code   ended   1     …s_…
-   … claude-code   ended   1     …s_…
-   … claude-code   ended   1     …s_…
+   LAST SEEN        AGENT         MODEL            STATE   TURNS EVENTS SESSION
+ › … claude-code   claude-opus-5-5  ended   1     …s_…
+   … claude-code   claude-opus-5-5  ended   1     …s_…
+   … claude-code   claude-opus-5-5  ended   1     …s_…
 …
  j/k move  ⏎ card  f filter  a agent  s state  x clear  r refresh  / search  ? help  q quit
 ```

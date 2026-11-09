@@ -61,26 +61,31 @@ When the programs are not on the `PATH` Zed sees, give their full paths: `binary
 
 ## What it shows
 
-Hover a line the agent wrote in the earlier pages (`retry.py`, line 1): the card names the state, the agent, the prompt it was asked, the session and the commit.
+Hover a line the agent wrote in the earlier pages (`retry.py`, line 1): the card names the state, the agent, the prompt it was asked, the session and the turn that wrote the line, the command that opens that turn's trace in a terminal, and the commit.
 
 ```text hover=retry.py:1
 ● AI · claude-code · claude-opus-5-5
 
 Asked: add a retry budget constant, RETRY_BUDGET = 3, in a new file retry.py
 
-Session s_… · Write · …
+Session s_… · turn 1 · Write · …
+
+Trace: lothal-ledger trace s_… --turn 1
+
+…
 
 Commit … Add a retry budget
 ```
 
-- **Hover** on a line: its card. The state with its label and mark (the same five as everywhere: AI ●, AI, changed since ◐, Tool · *name* ▲, Unattributed ○, No record ·), the agent and model, the prompt of the turn that wrote the line or the sentence saying why there is none (the same sentences as in the [terminal UI](tui.md#when-the-prompt-is-not-shown)), the session and the commit, the decisions, and links to the web when the repository has them. No record (`unknown`) is never shown as unattributed. In a buffer with unsaved edits, the card is the edited line's and says to save the file for the full story.
-- **Code lens** (or inlay hint) above each function and class in Rust, Python, TypeScript, TSX, JavaScript and Go: one line such as `ai 2 · ai~ 1 · claude-code · claude-opus-5-5 · 1 decision`. Clicking it opens the symbol's history on the web, or shows its card.
-- **Code actions** on a line, when the repository has web links: open the line's story, the session's trace, or the symbol's chain on the web.
+- **Hover** on a line: its card. The state with its label and mark (the same five as everywhere: AI ●, AI, changed since ◐, Tool · *name* ▲, Unattributed ○, No record ·), the agent and model, the prompt of the turn that wrote the line or the sentence saying why there is none (the same sentences as in the [terminal UI](tui.md#when-the-prompt-is-not-shown)), the session and the turn's number, the `lothal-ledger trace` command for that turn, the turn's steps (`Steps (turn 1): 3 · 1 edit · 1 failed`, then up to three failed steps with their exit code and error), the commit, the decisions, and links to the web when the repository has them. Each decision says why it was taken, the turn that recorded it with its `lothal-ledger trace` command, and `lothal-ledger decision <id>` for the whole decision; one tied to the session only by its time says *(linked by time window)*, as `lothal-ledger why` does, and one whose text an ignore rule excluded says so. An unattributed line says *No agent or tool write is recorded for this line.* No record (`unknown`) is never shown as unattributed. A line recorded before you upgraded to 0.5.0 is answered from the store the upgrade set aside, as `lothal-ledger why` answers it: its card says *legacy store: the store set aside at the upgrade (read only) answers this line; …* and names its session as *legacy store*, and the symbol's summary line counts it as that store answers it. In a buffer with unsaved edits, the card is the edited line's and says to save the file for the full story.
+- **Recording stopped**: when the store reaches its capture allowance, the editor says so once, and the card of a line no write is recorded for, or one not committed yet, ends with the CLI's sentence: *not recording: budget: the store reached its capture allowance, so nothing new is recorded or attributed until there is room (raise storage.cap or delete sessions; lothal-ledger doctor)*. A line of a commit made during the stop says *Not recorded: recording was stopped (not recording: budget); this commit was not folded.*, never that it is still folding.
+- **Code lens** (or inlay hint) above each function and class in Rust, Python, TypeScript, TSX, JavaScript and Go: one line such as `ai 2 · ai~ 1 · claude-code · claude-opus-5-5 · 1 decision`. Clicking it opens the symbol's history on the web, or shows its card, with the turn that recorded its newest decision.
+- **Code actions** on a line an agent or a tool wrote, in every repository: *Show the command for the writing turn's trace* shows the `lothal-ledger trace` command to run in a terminal (before the line's first hover, *Show the command for the writing session's trace*, the session's). When the repository has web links, also: open the line's story, the session's trace, or the symbol's chain on the web.
 - In a repository where you never ran `lothal-ledger enable`, the hover says *Not enabled in this repository*.
 
 ## The tools for Zed's Agent Panel
 
-The extension registers `lothal-ledger mcp` as the context server `lothal-ledger`, so Zed's agent can ask the ledger `why`, `dossier` and `search`, and record decisions. Zed is retiring extension-registered context servers; the same entry in your settings works without the extension:
+The extension registers `lothal-ledger mcp` as the context server `lothal-ledger`, so Zed's agent can ask the ledger `why`, `trace`, `dossier` and `search`, and record decisions ([Inside the agent](in-agent.md#asking-the-ledger-from-the-agent)). Zed is retiring extension-registered context servers; the same entry in your settings works without the extension:
 
 ```json
 {
@@ -100,5 +105,6 @@ The server speaks the Language Server Protocol over standard input and output, s
 - **The hover says *Update lothal-ledger***: the `lothal-ledger` the server found does not meet CLI contract 2 (lothal-ledger 0.4.7 or later); update it ([Install](install.md)). There is no fallback to older commands.
 - **The hover says *lothal-ledger is not installed***: the server found no `lothal-ledger`; install it ([Install](install.md)) or set `initialization_options.binary`.
 - **No summary lines**: turn code lenses on (above); a language outside the six has hovers only.
+- **Anything else**, *lothal-ledger could not answer* or *lothal-ledger did not answer* among it, or lines that read *Unattributed* while an agent is writing them: run `lothal-ledger doctor` in a terminal in the repository. It names what is wrong (the hooks, the store, a stop at the capture allowance) and what to run.
 
 Next: [Ask from the shell](cli.md).

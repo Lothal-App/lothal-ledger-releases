@@ -13,12 +13,15 @@ In a repository you enabled ([Enable and modes](enable-and-modes.md)), for every
 - **The context**: which files, searches, command outputs and instructions the model had been given before each call.
 - **Which lines each call wrote**, and the commits those lines went into.
 - **The decisions** you and the agent recorded.
+- **The agent's own records**: each record of its transcript or database the ledger read, kept once, with what was left out of it (opaque thinking, excluded or too large content) declared beside it. `doctor` checks them against the agent's files ([Troubleshooting](troubleshooting.md#the-round-trip)).
 
-Named ignore rules keep hashes and byte counts instead of excluded text. A whole-repository rule (`**`) covers every item, including prompts and decisions. An item over the configured item cap (8 MiB by default) is not kept, only its size: `Not kept: too large to keep.`
+Ignore rules keep content out ([Keep content out](enable-and-modes.md#keep-content-out)): `.lothal-ledger/ignore` in the repository, `.git/lothal/ignore` for every checkout of it, and `ignore` in your user config directory for every repository. An item a rule excludes keeps its hash, its byte count and which rule excluded it, never its text; the rule stays on this machine. A rule that excludes the repository whole (`**`) covers every item, including prompts, thinking and decisions. A line in a repository's file never lifts what your own `ignore` file excludes. An item over the configured item cap (8 MiB by default) is not kept, only its hash and size: `Not kept: too large to keep.`
 
 There is no explicit-decision exception: if the repository, the decision's capture scope or any file it names is excluded, `record_decision` keeps only the summary's and rationale's hashes and byte counts. Attribution and file, symbol and session links remain. The uploader also applies current exclusions to previously stored decision text; excluded prose never uploads.
 
 Nothing is recorded in a repository you did not enable, nor outside a repository. The ledger records no keystrokes and no editor saves, and never says a person wrote a line. On this machine what was recorded is yours: the store under `~/.local/state/lothal-ledger` is readable by your account only, and the CLI, the terminal UI and the editors show you all of it.
+
+An incognito session records nothing from the moment you choose it ([Keep a session out: incognito](enable-and-modes.md#keep-a-session-out-incognito)). `lothal-ledger delete-session` removes a session from this machine entirely ([Delete a session](enable-and-modes.md#delete-a-session)), except a session recorded before an upgrade from 0.4.8 or earlier: the store that upgrade set aside is read only, so there the session is hidden from every answer but stays on disk until you delete `legacy/`. What a `sync` repository already uploaded of a deleted session stays on the team platform for now, and `status` says `team delete: pending (Phase 7)`.
 
 A person's save during a long agent shell call (a script or build) can read `ai`, attributed to that agent. This is an accepted attribution limitation.
 
@@ -71,16 +74,13 @@ Every place that would show a prompt, a thought or a tool output says why it doe
 
 | You see | Why |
 |---|---|
-| Not recorded: this repository records attribution only. | the repository is `content none` |
+| Not recorded: an ignore rule excludes it. | an ignore rule excludes it: a file it names, or the repository whole (`**`, which `status` shows as `content none`); `status` lists the ignore files in force |
 | A prompt was recorded. Reading it needs content access from an organisation admin. | it is in the team store; you have no content access to it |
-| Not kept: a capture budget ran out (the store was full, or redaction ran out of time). | your local store was full when it was captured ([Storage](storage.md)), or redaction ran out of time |
-| Not kept: too large to keep. | it was over 8 MiB |
+| Not kept: a capture budget ran out (the store was full, or redaction ran out of time). | redaction ran out of time on it, or an earlier release found your local store full when it captured it (a full store now stops recording instead: [Storage](storage.md)) |
+| Not kept: too large to keep. | it was over the item cap (8 MiB by default, [Storage](storage.md)) |
 | Not uploaded: the redaction rules failed on it. | withheld whole rather than uploaded half-redacted |
 | Kept on the machine that recorded it; not uploaded. | its record was uploaded without its content, which stayed on the uploader's machine (for example a backfill without `--content`) |
-| Kept on the team store; removed from this machine. | your full store removed it after the team platform had it; signed in, it is read from there |
-| In the agent's transcript, not stored yet. | it waits in the agent's own transcript for room in your store |
-| Lost: the agent's transcript changed. | it was waiting in the transcript, which changed first |
-| Lost: the agent's transcript is gone. | the same, and the transcript was deleted |
+| Kept on the team store; removed from this machine. | your store, filling up, removed it after the team platform had it; signed in, it is read from there |
 | Removed: past its retention, or deleted. | its retention period ended, or it was deleted |
 | Held back: a later scan found something that looks secret; only its uploader can read it. | the team platform's re-scan, with newer rules, found what redaction missed |
 | The team store did not answer in time. | ask again |
