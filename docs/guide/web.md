@@ -93,7 +93,7 @@ The answer is everything recorded about those lines across the team's sessions:
 - **Content readers**: the current and ended content access grants, with the command that revokes each.
 - **API keys**: the organisation's keys for CI and the pull-request check (`llk_…`), when each was created and last used, and the commands to create and revoke one. A new key is shown once.
 - **Policy and storage**: the minimum redaction version uploads must have passed, and how much of the content storage cap is used.
-- **Repository modes**: what `local` and `sync` mean, and the commands that connect a repository. Only `lothal-ledger enable` and `disable`, run in the repository, change its mode; nothing on the web does. The page's **Content none** card predates 0.5.0: `enable` no longer takes `--content none`, and an ignore rule keeps content out instead ([Keep content out](enable-and-modes.md#keep-content-out)).
+- **Repository modes**: what `local` and `sync` mean, and the commands that connect a repository. Only `lothal-ledger enable` and `disable`, run in the repository, change its mode; nothing on the web does. The page's **Content none** card describes a mode `enable` does not have: an ignore rule keeps content out ([Keep content out](enable-and-modes.md#keep-content-out)).
 
 ![Settings, Content readers: the current and ended grants, each with its status, dates and command](img/web/content-readers.webp)
 

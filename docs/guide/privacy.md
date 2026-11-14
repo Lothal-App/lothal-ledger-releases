@@ -21,7 +21,7 @@ There is no explicit-decision exception: if the repository, the decision's captu
 
 Nothing is recorded in a repository you did not enable, nor outside a repository. The ledger records no keystrokes and no editor saves, and never says a person wrote a line. On this machine what was recorded is yours: the store under `~/.local/state/lothal-ledger` is readable by your account only, and the CLI, the terminal UI and the editors show you all of it.
 
-An incognito session records nothing from the moment you choose it ([Keep a session out: incognito](enable-and-modes.md#keep-a-session-out-incognito)). `lothal-ledger delete-session` removes a session from this machine entirely ([Delete a session](enable-and-modes.md#delete-a-session)), except a session recorded before an upgrade from 0.4.8 or earlier: the store that upgrade set aside is read only, so there the session is hidden from every answer but stays on disk until you delete `legacy/`. What a `sync` repository already uploaded of a deleted session stays on the team platform for now, and `status` says `team delete: pending (Phase 7)`.
+An incognito session records nothing from the moment you choose it ([Keep a session out: incognito](enable-and-modes.md#keep-a-session-out-incognito)). `lothal-ledger delete-session` removes a session from this machine's store entirely ([Delete a session](enable-and-modes.md#delete-a-session)); it leaves a store of another build, set aside ([A store of another build](storage.md#a-store-of-another-build)), as it is, so what was recorded there stays until you delete `set-aside/`. What a `sync` repository already uploaded of a deleted session stays on the team platform for now, and `status` says `team delete: pending (Phase 7)`.
 
 A person's save during a long agent shell call (a script or build) can read `ai`, attributed to that agent. This is an accepted attribution limitation.
 
@@ -76,7 +76,7 @@ Every place that would show a prompt, a thought or a tool output says why it doe
 |---|---|
 | Not recorded: an ignore rule excludes it. | an ignore rule excludes it: a file it names, or the repository whole (`**`, which `status` shows as `content none`); `status` lists the ignore files in force |
 | A prompt was recorded. Reading it needs content access from an organisation admin. | it is in the team store; you have no content access to it |
-| Not kept: a capture budget ran out (the store was full, or redaction ran out of time). | redaction ran out of time on it, or an earlier release found your local store full when it captured it (a full store now stops recording instead: [Storage](storage.md)) |
+| Not kept: a capture budget ran out (the store was full, or redaction ran out of time). | redaction ran out of time on it; a full local store stops recording instead of keeping part of a record ([Storage](storage.md)) |
 | Not kept: too large to keep. | it was over the item cap (8 MiB by default, [Storage](storage.md)) |
 | Not uploaded: the redaction rules failed on it. | withheld whole rather than uploaded half-redacted |
 | Kept on the machine that recorded it; not uploaded. | its record was uploaded without its content, which stayed on the uploader's machine (for example a backfill without `--content`) |

@@ -1,6 +1,8 @@
 # Lothal Ledger: the alpha user guide
 
-Lothal Ledger records how AI coding agents build your software: which lines each agent wrote, in which session, with which model and from which prompt, and what you and the agent decided along the way. Months later, anyone can ask why a line or a function exists and get that answer back, from the shell, from inside the agent, or from the team's copy.
+For any line of code, Lothal Ledger gives the whole recorded history of how it came to be: the agent turns that wrote it, each with its prompt, the model's thinking where the agent shows it, its tool calls and what the model was given, linked to the line by fixed rules; the decisions an agent or a person states are a second kind of information, labelled as such.
+
+You ask from the shell, from inside the agent, in your editor, or on the team's copy on the web.
 
 This guide is for alpha testers. It assumes nothing about the project's source: follow the pages in order on a fresh machine and you go from installing to sharing what your agents recorded. Every command shown here except Ubuntu's own `apt-get` line is run by a test in the repository (installing and updating, which need the network, in a fresh Ubuntu container), and every terminal capture is what that command printed on a fresh machine (your times, versions and paths differ; `…` marks the parts that do).
 
@@ -8,7 +10,7 @@ For readability, captures abbreviate your home directory as `~`. `status`, `doct
 
 ## What the alpha is
 
-- A command-line program, `lothal-ledger`, for Ubuntu 24.04 on x86_64. v0.5.2 ships x86_64 Linux only; there is no macOS or Windows download in this release. It hooks into your coding agents and into git, and keeps what it records on your machine.
+- A command-line program, `lothal-ledger`, for Ubuntu 24.04 on x86_64. v0.5.4 ships x86_64 Linux only; there is no macOS or Windows download in this release. It hooks into your coding agents and into git, and keeps what it records on your machine.
 - Tested every release with **Claude Code**, **Codex** and **omp**. Other agents (Cursor CLI, Copilot CLI, Gemini CLI, OpenCode, pi, Amp, Droid, Windsurf, Antigravity) are supported on a best-effort basis.
 - Opt-in per repository: nothing is recorded until you run `lothal-ledger enable` in a repository.
 - Local first: without signing in nothing leaves your machine. Signed in, a repository you enabled with `--sync` uploads what it records, redacted on your machine first, to the team platform (the dev stage, `api.dev.lothal.app`).
@@ -18,7 +20,7 @@ For readability, captures abbreviate your home directory as `~`. `status`, `doct
 - It never says a person wrote a line. A line is written by an agent (`ai`), by an agent and then changed (`ai, changed since`), by a tool an agent ran (`tool`), or nothing was observed writing it (`unattributed`). When this machine has no record of a commit, the answer is `unknown`, never `unattributed`.
 - It records no keystrokes, no editor saves and nothing outside the repositories you enabled.
 - It never blocks your agent or git: when something goes wrong it records less, and says so in `lothal-ledger doctor`.
-- It is an alpha: commands and output can change between releases. Upgrades keep your data.
+- It is an alpha: commands and output can change between releases. An upgrade keeps your settings, your repositories' modes and your agents' hooks; a store of another build is set aside, not migrated, and a fresh store records from then on ([A store of another build](storage.md#a-store-of-another-build)).
 
 ## The pages
 
@@ -28,11 +30,11 @@ For readability, captures abbreviate your home directory as `~`. `status`, `doct
 | [Enable and modes](enable-and-modes.md) | Turn recording on in a repository, choose `local` or `sync`, keep content out, check the setup, turn it off, keep a session out (incognito) or delete one. |
 | [Sign in and sync](login-and-sync.md) | Sign in, see what uploads and when, upload what you recorded before signing in, sign out. |
 | [Privacy](privacy.md) | What is recorded, what leaves your machine, who can read what you uploaded, and what you see instead of text you may not read. |
-| [Storage](storage.md) | How much the ledger keeps on your machine, the cap and the reserve, and what happens when it is full. |
-| [The terminal UI](tui.md) | See this machine's state, what wrote each line of a file, a line's whole story and the sessions, in a terminal. |
+| [Storage](storage.md) | How much the ledger keeps on your machine, the cap and the reserve, what happens when it is full, and a store of another build. |
+| [The terminal UI](tui.md) | See this machine's state, what wrote each line of a file, a line's whole story, the decisions stated about a line or a function (the Decisions view) and the sessions, in a terminal. |
 | [VS Code](vscode.md) | Line marks, a why card on hover and a summary above each function in VS Code, Cursor or Windsurf. |
 | [Zed](zed.md) | The same in Zed and other editors through the ledger's editor server. |
-| [Ask from the shell](cli.md) | Who wrote each line, why a line or a function exists, how the agent got there (the trace), the sessions, search, the JSON for scripts, and the links an editor opens on the web. |
+| [Ask from the shell](cli.md) | Who wrote each line, why a line or a function exists, the decisions stated about the code (`decisions`), how the agent got there (the trace), the sessions, search, the JSON for scripts, and the links an editor opens on the web. |
 | [Inside the agent](in-agent.md) | What the agent tells you, the card it gets when it reads a file, and the ledger's tools it can call. |
 | [On the web](web.md) | Without the CLI: from a repository to why a line exists, a session's whole trace, investigating lines, decisions, search, and the organisation's settings, and what you see without content access. |
 | [Troubleshooting](troubleshooting.md) | What `doctor` says and what to do about it; removing everything. |

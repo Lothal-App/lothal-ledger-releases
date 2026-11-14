@@ -28,6 +28,12 @@ While recording is stopped because your store reached its capture allowance, the
 Lothal Ledger: not recording: budget: the store reached its capture allowance, so nothing new is recorded or attributed until there is room (raise storage.cap or delete sessions; lothal-ledger doctor)
 ```
 
+When free space on the disk holding the store is below `storage.reserve`, the stop names the disk instead, whatever the cap ([When the disk is short](storage.md#when-the-disk-is-short)):
+
+```text
+Lothal Ledger: not recording: budget: free space on the store's filesystem is below storage.reserve, so nothing new is recorded or attributed until there is room (free disk space or lower storage.reserve; lothal-ledger doctor)
+```
+
 Once there is room again, the session's next step is recorded and the recording line is shown again ([Storage](storage.md#when-the-store-is-full)).
 
 If recording is turned off for the repository during a session (`lothal-ledger disable`, or a settings file that sets `enabled: false`), the session's next step says so once, in omp in the recording line's place:
@@ -51,7 +57,7 @@ A session that is not recorded from its start (a repository you did not enable, 
 
 In omp, `/ledger-incognito` ([Keep a session out: incognito](enable-and-modes.md#keep-a-session-out-incognito)) answers in the recording line's place: `Lothal Ledger: incognito requested; recording is disabled for this session.` In a session that recorded something already, it asks first: `Lothal Ledger: this session is incognito now; nothing more is recorded. Keep or delete what it recorded before? Unanswered, it is kept.` Then it says `Lothal Ledger: incognito; what this session recorded before is kept, nothing more is recorded.` or `Lothal Ledger: incognito; what this session recorded is deleted from this machine.` While another program keeps the store open (the ledger's background process often does), the delete hides the session at once, but its old pages stay in the store's files until the command runs again: the line says `Lothal Ledger: incognito; what this session recorded is deleted and hidden on this machine; run` and names the `lothal-ledger delete-session` command, with the session's 32-character hash, that finishes erasing it. A delete that stopped earlier says `Lothal Ledger: incognito; deleting what this session recorded did not complete and nothing of it uploads; run` and the same command, in the line and as a warning.
 
-Below either delete line, omp adds what `delete-session` says beside it when it applies: `Lothal Ledger: legacy store: N events hidden (read only, not rewritten)` for a session that also has events in the store set aside at the v0.5.0 upgrade (that store is read only, so they are hidden, not erased), and `Lothal Ledger: team delete: pending (Phase 7)` when the team platform already holds a copy, which stays there until Phase 7.
+Below either delete line, omp adds what `delete-session` says beside it when it applies: `Lothal Ledger: team delete: pending (Phase 7)` when the team platform already holds a copy, which stays there until Phase 7.
 
 ## The card when the agent reads a file
 
@@ -68,7 +74,7 @@ To turn the cards off, set `"inject": "off"` in `~/.config/lothal-ledger/setting
 
 ## Asking the ledger from the agent
 
-The tool server answers five questions. Ask in your own words and the agent calls the tool, for example:
+The tool server has six tools: `why`, `decisions`, `trace`, `dossier`, `search` and `record_decision`. Ask in your own words and the agent calls the tool, for example:
 
 > Use the lothal-ledger `why` tool: why does line 5 of backoff.py exist, and what was the prompt?
 
@@ -79,21 +85,22 @@ The tool server answers five questions. Ask in your own words and the agent call
 | Tool | Answers |
 |---|---|
 | `why` | a line (with `line`), a function or class (with `symbol`), or a whole file: the same answers as [`lothal-ledger why`](cli.md#why-a-line-exists-why), with the card of the function around the line. For a line, also the writing session's steps as it ran them, before anything is committed, and for a decision made in a turn, that turn's index. With a line and `trace: true`, the trace of the turn that wrote it, as [`why --trace`](cli.md#how-the-agent-got-there-why---trace-and-trace) |
+| `decisions` | only what agents and people stated about a line (with `line`), a function or class (with `symbol`), or a whole file, newest first: each decision's date, who stated it, its summary and rationale, and the turn that recorded it, the same answer as [`lothal-ledger decisions`](cli.md#what-was-decided-decisions), labelled as stated. For a quick review; the writers and the rest of the recorded history are `why`'s |
 | `trace` | a page of a session's trace, turn by turn, as `lothal-ledger trace` prints it; with `turn`, the one turn `why` named by its index |
 | `dossier` | the cards of a file's symbols, or of some of its lines, as above |
 | `search` | the prompts, answers and narration this machine kept that match some words (and, signed in, what you may read on the team platform) |
-| `record_decision` | records a decision you and the agent made, with its reason and the files (or symbols) it concerns; `why` lists it from then on. The server tells the agent to record one when it chooses between real alternatives or follows a constraint the code does not show, not for every edit. In an incognito session it refuses: `this session is incognito; the decision was not recorded` |
+| `record_decision` | records a decision you and the agent made, with its rationale and the files (or symbols) it concerns; `decisions` lists it from then on, and `why` counts it in its `decisions:` line. The server tells the agent to record one when it chooses between real alternatives or follows a constraint the code does not show, not for every edit. In an incognito session it refuses: `this session is incognito; the decision was not recorded` |
 
-The answers come from this machine's store; signed in, the tools add what the team platform holds for a repository enabled with `--sync`, waiting for it at most 150 milliseconds. The named file's repository decides, not the tool server's working directory; `search` uses the current repository. A `local` repository sends nothing, including with `remote: true`: the tool server says why and points to `lothal-ledger enable --sync` in that repository. `why` and `dossier` answer for the tool server's own repository and for enabled repositories, never for a file of a repository that was never enabled and never for a file git ignores and no index tracks (a gitignored `.env`): the tool result says so. An ignore rule that excludes a `sync` repository whole still permits team reads under the platform's access rules.
+The answers come from this machine's store; signed in, the tools add what the team platform holds for a repository enabled with `--sync`, waiting for it at most 150 milliseconds. The named file's repository decides, not the tool server's working directory; `search` uses the current repository. A `local` repository sends nothing, including with `remote: true`: the tool server says why and points to `lothal-ledger enable --sync` in that repository. `why`, `decisions` and `dossier` answer for the tool server's own repository and for enabled repositories, never for a file of a repository that was never enabled and never for a file git ignores and no index tracks (a gitignored `.env`): the tool result says so. An ignore rule that excludes a `sync` repository whole still permits team reads under the platform's access rules.
 
-A line or session recorded before you upgraded to 0.5.0 is answered by `why` and `trace` from the store the upgrade set aside, marked `source: legacy`; `dossier` does not read it.
+A line of a commit only a store set aside folded reads `unknown` in `why` and `dossier`: no tool reads a set-aside store.
 
 | Agent | The tool server |
 |---|---|
 | Claude Code, Codex | listed by `/mcp` as `lothal-ledger`; a decision is linked to the session that recorded it when the agent tells the server which session it is, otherwise to the agent's one session active in the repository in the last 10 minutes, if there is exactly one |
 | omp | started with the next session (`/mcp reload` in a running one); its decisions are recorded without a session, and in a `sync` repository, while signed in, uploaded under the repository and listed for the files and symbols they concern. While a session of that omp process is incognito, `record_decision` refuses until you restart omp |
 
-New unlinked decisions sync without guessing a conversation. Decisions recorded without a session by older versions remain on that machine: those rows did not retain the original recording consent or upload ownership.
+A decision linked to no session syncs without guessing a conversation.
 
 `doctor`'s `MCP` rows say, per agent, whether the entry is `current`; [Troubleshooting](troubleshooting.md) says what to do when it is not.
 

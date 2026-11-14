@@ -41,9 +41,9 @@ Two things are not right and worth a report ([Feedback](feedback.md)), with `doc
 
 **After an upgrade, a ledger tool answers `MCP server retired after an upgrade`.** The agent session still runs the tool server of the release before. Reconnect the server (in omp, `/mcp reload`) or restart the session ([Install](install.md#upgrade)).
 
-**After upgrading from 0.4.8 or earlier, answers say `legacy store`.** The old store was set aside unchanged and a new one started ([Install](install.md#upgrade)); a line or session only the old store holds is answered from it and says so. Nothing to do: it is read-only and does not count toward the storage cap ([Storage](storage.md#the-store-set-aside-at-an-upgrade)). Until the background flusher has set it aside, `doctor` says `migration pending` and what the hooks capture waits for it.
+**After an upgrade or a downgrade, `status` and `doctor` say `Set-aside store: the store of another build`.** The store was in another build's schema: the first command or agent hook set it aside, unchanged, and started a fresh store, which records from then on ([A store of another build](storage.md#a-store-of-another-build)). Nothing reads it, so what only that store held has no record here. Deleting the `set-aside/` directory is safe.
 
-**`status` says `content none`, or content reads `Not recorded: an ignore rule excludes it.`** An ignore rule excludes it ([Keep content out](enable-and-modes.md#keep-content-out)): `status` lists the ignore files in force and how many rules each holds. A repository excluded whole has a `**` line in `.lothal-ledger/ignore`, in `.git/lothal/ignore` (where the ledger moved a repository's old `--content none` setting) or in `~/.config/lothal-ledger/ignore`. Delete that line to record content from then on; what was recorded while it was there keeps no content.
+**`status` says `content none`, or content reads `Not recorded: an ignore rule excludes it.`** An ignore rule excludes it ([Keep content out](enable-and-modes.md#keep-content-out)): `status` lists the ignore files in force and how many rules each holds. A repository excluded whole has a `**` line in `.lothal-ledger/ignore`, in `.git/lothal/ignore` or in `~/.config/lothal-ledger/ignore`. Delete that line to record content from then on; what was recorded while it was there keeps no content.
 
 **A git hook is `skipped`.** Another hook or a hook manager (husky, lefthook, pre-commit, `core.hooksPath`) holds that slot. Nothing of yours is changed. Commits are still linked, when the next agent hook or `lothal-ledger` command runs, as long as git's own records prove which commit each was made on.
 
@@ -79,7 +79,7 @@ cd ~
 lothal-ledger disable
 ```
 
-What was recorded stays until you delete it. The first line also removes the store an upgrade set aside (`legacy/`); the second, the repository's shared `.git/lothal/ignore`:
+What was recorded stays until you delete it. The first line also removes the stores set aside (`set-aside/`); the second, the repository's shared `.git/lothal/ignore`:
 
 ```bash
 rm -rf ~/.local/state/lothal-ledger

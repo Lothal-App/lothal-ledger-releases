@@ -37,7 +37,7 @@ There is no state for a person. Right after a commit, the ledger may still be wo
 
 ## Why a line exists: `why`
 
-`lothal-ledger why <file>:<line>` gives the line's state, the commit, and the session, call and turn that wrote it, with your prompt:
+`lothal-ledger why <file>:<line>` gives the line's state, the commit, every write behind the line, newest first, and the session, call and turn that wrote it, with your prompt:
 
 ```console
 $ lothal-ledger why backoff.py:5
@@ -46,6 +46,10 @@ backoff.py:5  ai  (commit … Add retry delays; local)
 commit body:
     Double each wait using the shared retry budget.
 model: claude-opus-5-5
+history (newest first):
+  s_… turn 1  claude-opus-5-5  …  ai
+    prompt: add a function delays(base) in a new file backoff.py: the wait before each retry, doubling from base, RETRY_BUDGET of th …
+    lothal-ledger trace s_… --turn 1
 wrote s_…::t_…
   claude-code session … (ended, …)
     call PostToolUse Write … at …
@@ -62,7 +66,7 @@ commit sessions:
   claude-code …
 ```
 
-It also names the write the line replaced, other sessions linked to the commit, and the decisions recorded for the file. Under `steps of session`, it lists the writing session's tool calls in the order they ran, recorded as the session ran, and marks the one that wrote the line. When the prompt is not shown, a line in its place says why ([Privacy](privacy.md#what-you-see-instead-of-the-text)). `--context` adds what the model had been given before it wrote the line.
+Under `history (newest first)` it lists every write behind the line, back to the oldest one the ledger recorded: here one, the agent's; after a formatter run and a later edit by another session, three, each with its session, turn number, model, date, state and prompt, and the `trace` command that opens its turn. When the oldest write replaced a line nobody recorded, the list ends with `unattributed`. Below it come the writer's call, turn and prompt in full, the write the line replaced, and other sessions linked to the commit. The decisions you or the agent stated are counted in one line, `decisions: 2 stated; lothal-ledger decisions backoff.py:5`, the command that lists them. Under `steps of session`, it lists the writing session's tool calls in the order they ran, recorded as the session ran, and marks the one that wrote the line. When the prompt is not shown, a line in its place says why ([Privacy](privacy.md#what-you-see-instead-of-the-text)). `--context` adds what the model had been given before it wrote the line.
 
 The steps are there before any commit, as soon as the agent has written the line. Ask about a line an agent wrote, tested, rewrote and tested again, and the steps show that story: the first write, marked `[wrote the text this line displaced]`, the test command that failed with its exit code (`failed, exit 101` for a failing `cargo test`), the rewrite, marked `[wrote this line]`, and the test that passed. The writing turn says `not committed` until a commit holds the line, then names the commit; the steps stay the same. `why` lists at most 24 steps; when more follow, it says so and `trace` shows the rest.
 
@@ -80,7 +84,7 @@ Besides the decisions that name the file, `why` lists the ones that led to the l
 
 The commit's prose appears under `commit body:` (at most 4,096 UTF-8 bytes). Git trailers such as `Lothal-Session`, `Co-authored-by` and `Signed-off-by` are not prose: a commit with only those after its subject has no body section. For a commit this machine never folded, session trailers appear separately as commit hints, never as proof of which session wrote the line.
 
-A line committed before an upgrade from 0.4.8 or earlier is answered from the store that upgrade set aside: `why` says `legacy store: the store set aside at the upgrade`, `blame` adds `(legacy store)`, `trace` says `From the legacy store`, and `--json` carries `"source": "legacy"` ([Install](install.md#upgrade)).
+A line of a commit only a store of another build folded reads `unknown`: the fresh store never folded its commit ([A store of another build](storage.md#a-store-of-another-build)). `trace` reads the current store only: a session only the set-aside store holds is unknown to it.
 
 ## Why a function exists: `why <file>:<function>` and `dossier`
 
@@ -97,7 +101,7 @@ wrote s_…::t_…
 …
 ```
 
-`dossier` gives the short card of every function and class in a file (or of one, with `<file>:<name>`): its lines, their states, the write that first made it and its newest decision.
+`dossier` gives the short card of every function and class in a file (or of one, with `<file>:<name>`): its lines, their states, the write that first made it and its newest decision. A file an ignore rule excludes has no card: `dossier` says the rule excludes it, and so do the `symbols` command and the agents' `dossier` tool, since a function's name is the file's content. The card an agent gets after reading it is not made either, and the team platform is never asked about its functions.
 
 ```console
 $ lothal-ledger dossier backoff.py
@@ -105,6 +109,33 @@ function delays L4-5: ai 2, unattributed 0; origin claude-code claude-opus-5-5 �
 ```
 
 The agents get the same card when they read the file ([Inside the agent](in-agent.md#the-card-when-the-agent-reads-a-file)).
+
+## What was decided: `decisions`
+
+`why` gives the recorded history. `lothal-ledger decisions <file>`, `<file>:<line>` or `<file>:<function>` gives only what agents and people stated about that code, for a quick review: the decisions that name it, newest first, each with its date, who stated it, its summary and rationale, and the route to the turn that recorded it. They are stated, not recorded: a second kind of information, labelled as such and kept apart from the history `why` shows, since an agent may state a decision badly or not at all. A decision the agent derived (`ai_derived`) and what a session captured on its own (a question answered, a plan approved, a permission decided) are not listed here; `why` lists them. Signed in, a `sync` repository adds your teammates' stated decisions.
+
+An agent states a decision when you ask it to, or when it chooses between real alternatives ([Inside the agent](in-agent.md#asking-the-ledger-from-the-agent)). Ask your agent `Record a decision with lothal-ledger: each retry waits twice as long as the one before, at most RETRY_BUDGET waits, because the upstream API rate-limits bursts; it applies to delays in backoff.py`. This is what the agent sends, a call of the ledger's `record_decision` tool with the decision's summary, its rationale and the code it concerns:
+
+```json mcp=record_decision
+{
+  "summary": "Each retry waits twice as long as the one before, at most RETRY_BUDGET waits",
+  "rationale": "The upstream API rate-limits bursts: a fixed wait retries too soon.",
+  "paths": ["backoff.py"],
+  "symbols": [{"path": "backoff.py", "name": "delays"}]
+}
+```
+
+Then ask the ledger what was decided about the function:
+
+```console
+$ lothal-ledger decisions backoff.py:delays
+decisions stated by agents and people about backoff.py:delays, newest first; the recorded history: lothal-ledger why backoff.py:delays
+  …  agent claude-code  decision …: Each retry waits twice as long as the one before, at most RETRY_BUDGET waits
+    why: The upstream API rate-limits bursts: a fixed wait retries too soon.
+    recorded in: no recording call known
+```
+
+The first line says what the list is and where the recorded history is. Each decision then gives when it was stated, who stated it (`agent claude-code`, or `person` for a decision a person stated), its id and summary, `why:` and its rationale, and `recorded in:`, the agent, session, turn and call that recorded it, which the ledger reads from the session's transcript, with the route to that turn under it, `lothal-ledger trace s_… --turn 1`. A call no transcript holds, as in this example, reads `recorded in: no recording call known`. A decision from the team platform is marked `[team platform]`, and one whose text an ignore rule excludes reads `Not recorded: an ignore rule excludes it.` in place of its summary and rationale. With none stated, `decisions` prints its first line only, which says that no decision names the target. `lothal-ledger decision <id>` shows one decision with the paths and symbols it names as they are now.
 
 ## Sessions and search
 
@@ -117,7 +148,7 @@ $ lothal-ledger sessions --limit 2
 More: lothal-ledger sessions --cursor l.…
 ```
 
-The edit count is the number of calls that edited, deleted or moved files, one for each call: one Codex `apply_patch` or omp `edit` is one edit. A call that failed, was denied or was never confirmed (Codex sends no confirmation for an `apply_patch` it refused, so the end of the turn closes it as interrupted) changed no file and is not counted. Sessions recorded by v0.4.7 and earlier counted a Codex `apply_patch` twice (its own call and the `exec` wrapper that ran it) and counted refused calls; `sessions` now counts them as above when it reads those sessions, as it changes no stored record. These Claude Code examples use one `Write` per session.
+The edit count is the number of calls that edited, deleted or moved files, one for each call: one Codex `apply_patch` or omp `edit` is one edit. A call that failed, was denied or was never confirmed (Codex sends no confirmation for an `apply_patch` it refused, so the end of the turn closes it as interrupted) changed no file and is not counted. These Claude Code examples use one `Write` per session.
 
 A shell command that wrote lines (`cat >> file`) counts as an edit once a commit holds those lines. A session an agent started for a subtask (a subagent) is listed under the session that started it, indented, with the name it was given and `(subagent of s_…)`.
 
@@ -129,7 +160,7 @@ s_…  …  claude-code  prompt
     add a function «delays»(base) in a new file backoff.py: the wait before each retry, doubling from base, RETRY_BUDGET of them
 ```
 
-The text form is the same on a terminal and piped (since 0.4.7; before, a piped `search` printed JSON by itself). `--json` prints one JSON document, for a script. For example:
+The text form is the same on a terminal and piped. `--json` prints one JSON document, for a script. For example:
 
 ```console
 $ lothal-ledger search delays --json | jq -c '{fields: [.hits[].matched] | unique}'
@@ -192,7 +223,7 @@ $ lothal-ledger sessions --limit 2 --cursor "$(lothal-ledger sessions --limit 2 
 … claude-code  claude-opus-5-5  ~/src/your-project  1 turn, 1 edit  s_…
 ```
 
-`--version --json` names the version and the number of the JSON contract the editors check (`2` since 0.4.7, `1` from 0.4.5 to 0.4.6), and `doctor --json` lists what needs you under `attention`, each with its remedy ([Enable and modes](enable-and-modes.md#check-the-setup)):
+`--version --json` names the version and the number of the JSON contract the editors check (`2`), and `doctor --json` lists what needs you under `attention`, each with its remedy ([Enable and modes](enable-and-modes.md#check-the-setup)):
 
 ```console
 $ lothal-ledger --version --json | jq -c '{contract}'
